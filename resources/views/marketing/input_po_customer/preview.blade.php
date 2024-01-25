@@ -27,7 +27,7 @@
         </div>
 
         <div class="row text-center">
-            <h1>PO CUSTOMER</h1>
+            <h1>KONFIRMASI ORDER</h1>
             <p>Nomor: {{ $inputPOCustomer->po_number }}</p>
         </div>
 
@@ -53,19 +53,22 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($inputPOCustomer->inputPOCustomerDetails as $detail)
-                            @php
-                                $productName = getProductName($detail->type_product, $detail->id_master_product);
-                            @endphp
-                            <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $productName }}</td>
-                                <td>{{ $detail->masterUnit->unit }}</td>
-                                <td>{{ $detail->qty }}</td>
-                                <td>{{ $detail->price }}</td>
-                                <td>{{ $detail->subtotal }}</td>
-                            </tr>
-                        @endforeach
+                        <tr>
+                            <td>No</td>
+                            <td>Nama Barang</td>
+                            <td>Ukuran</td>
+                            <td>Jumlah</td>
+                            <td>Harga</td>
+                            <td>Total Harga</td>
+                        </tr>
+                        <tr>
+                            <td>No</td>
+                            <td>Nama Barang</td>
+                            <td>Ukuran</td>
+                            <td>Jumlah</td>
+                            <td>Harga</td>
+                            <td>Total Harga</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

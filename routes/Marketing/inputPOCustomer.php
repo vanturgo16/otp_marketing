@@ -23,6 +23,7 @@ Route::group(
       Route::post('/bulk-posted', 'bulkPosted')->name('marketing.inputPOCust.bulkPosted');
       Route::post('/bulk-unposted', 'bulkUnPosted')->name('marketing.inputPOCust.bulkUnPosted');
       Route::post('/bulk-deleted', 'bulkDeleted')->name('marketing.inputPOCust.bulkDeleted');
+      Route::get('/preview/{encryptedPoNumber}', 'preview')->name('marketing.inputPOCust.preview');
       Route::get('/print/{encryptedPoNumber}', 'print')->name('marketing.inputPOCust.print');
     });
   }

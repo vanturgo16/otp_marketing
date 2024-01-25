@@ -115,6 +115,29 @@
             </div>
         </div>
     </div>
+
+    <!-- Static Backdrop Modal PDF -->
+    <div class="modal fade" id="modalPDF" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        role="dialog" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Preview or Print</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center fs-1">
+                    <a href="#" class="btn btn-primary waves-effect waves-light w-sm preview" target="_blank"
+                        rel="noopener noreferrer">
+                        <i class="mdi mdi-search-web d-block fs-1"></i> Preview
+                    </a>
+                    <a href="#" class="btn btn-success waves-effect waves-light w-sm print" target="_blank"
+                        rel="noopener noreferrer">
+                        <i class="mdi mdi-printer d-block fs-1"></i> Print
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')

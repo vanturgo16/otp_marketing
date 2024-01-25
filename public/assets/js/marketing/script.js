@@ -759,3 +759,9 @@ function refreshDataTable() {
     $('#po_customer_table').DataTable().ajax.reload();
     $('#checkAllRows').prop('checked', false);
 }
+
+function modalPDF(po_number) {
+    $('.preview').attr('href', baseRoute + '/marketing/inputPOCust/preview/' + po_number,)
+    $('.print').attr('href', baseRoute + '/marketing/inputPOCust/print/' + po_number,)
+    $('#modalPDF').modal('show');
+}
