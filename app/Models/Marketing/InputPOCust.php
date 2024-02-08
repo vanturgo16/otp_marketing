@@ -2,8 +2,9 @@
 
 namespace App\Models\Marketing;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\MstCustomersAddress;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class InputPOCust extends Model
 {
@@ -18,7 +19,12 @@ class InputPOCust extends Model
     {
         return $this->belongsTo(\App\Models\MstCustomers::class, 'id_master_customers', 'id');
     }
-
+    
+    public function masterCustomerAddress()
+    {
+        return $this->hasMany(\App\Models\MstCustomersAddress::class, 'id_master_customers', 'id_master_customers');
+    }
+    
     // Definisikan relasi many-to-one ke tabel master_salesman
     public function masterSalesman()
     {

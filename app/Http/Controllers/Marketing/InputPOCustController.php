@@ -154,8 +154,6 @@ class InputPOCustController extends Controller
                     'subtotal' => $request->subtotal[$key],
                     // Sesuaikan dengan kolom-kolom lain yang ada pada tabel order_confirmation_detail
                 ]);
-                $arr_Products = [];
-                array_push($arr_Products, 5, 8);
             }
 
             $this->saveLogs('Adding New Customer PO : ' . $request->po_number);

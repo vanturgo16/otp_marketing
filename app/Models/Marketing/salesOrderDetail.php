@@ -1,21 +1,22 @@
 <?php
 
-namespace App\Models\Marketing;
+namespace App\Models\marketing;
 
+use App\Models\Marketing\salesOrder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class OrderConfirmationDetail extends Model
+class salesOrderDetail extends Model
 {
     use HasFactory;
-    protected $table = 'order_confirmation_details';
+    protected $table = 'sales_order_details';
     protected $guarded = [
         'id'
     ];
 
-    public function orderConfirmation()
+    public function salesOrders()
     {
-        return $this->belongsTo(orderConfirmation::class, 'oc_number');
+        return $this->belongsTo(salesOrder::class, 'so_number');
     }
 
     // Definisikan relasi many-to-one ke tabel master_units
