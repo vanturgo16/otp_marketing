@@ -13,6 +13,8 @@
                 {{ $data->status == 'Request' ? 'Posted' : 'Un Posted' }}</button>
         </li>
         <li>
+            {{-- <button class="dropdown-item drpdwn-scn" onclick="modalPDF('{{ encrypt($data->po_number) }}')"><span
+                    class="mdi mdi-printer"></span> | Preview or Print</button> --}}
             <a class="dropdown-item drpdwn-scn"
                 href="{{ route('marketing.inputPOCust.print', encrypt($data->po_number)) }}" target="_blank" rel="noopener noreferrer"><span
                     class="mdi mdi-printer"></span> | Print</a>

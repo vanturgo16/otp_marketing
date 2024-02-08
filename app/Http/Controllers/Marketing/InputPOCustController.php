@@ -614,8 +614,23 @@ class InputPOCustController extends Controller
         }
     }
 
-    public function print()
+    public function preview($encryptedPoNumber)
     {
-        return view('marketing.input_po_customer.print');
+        $poNumber = Crypt::decrypt($encryptedPoNumber);
+        $inputPOCustomer = InputPOCust::with('inputPOCustomerDetails.masterUnit', 'masterSalesman')
+            ->where('po_number', $poNumber)
+            ->first();
+        // dd($pu_customer);
+        return view('marketing.input_po_customer.preview', compact('inputPOCustomer'));
+    }
+
+    public function print($encryptedPoNumber)
+    {
+        $poNumber = Crypt::decrypt($encryptedPoNumber);
+        $inputPOCustomer = InputPOCust::with('inputPOCustomerDetails', 'inputPOCustomerDetails.masterUnit', 'masterSalesman')
+            ->where('po_number', $poNumber)
+            ->first();
+        // dd($pu_customer);
+        return view('marketing.input_po_customer.print', compact('inputPOCustomer'));
     }
 }
