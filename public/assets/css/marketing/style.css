@@ -156,3 +156,11 @@ input[type="checkbox"]:disabled {
     color: var(--form-control-disabled);
     cursor: not-allowed;
 }
+
+input[type="checkbox"]:hover {
+    cursor: pointer;
+}
+
+.row-check {
+    cursor: pointer;
+}

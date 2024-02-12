@@ -560,7 +560,11 @@
         <script>
             let baseRoute = '{{ url('') }}';
         </script>
-        <script src="{{ asset('assets/js/marketing/script.js') }}"></script>
+        @if (request()->is('marketing/inputPOCust') || request()->is('marketing/inputPOCust/*'))
+            <script src="{{ asset('assets/js/marketing/script.js') }}"></script>
+        @elseif (request()->is('marketing/salesOrder/*'))
+            <script src="{{ asset('assets/js/marketing/sales_order.js') }}"></script>
+        @endif
     @endif
     <!-- Scripts -->
     @stack('scripts')

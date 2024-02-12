@@ -193,5 +193,6 @@ Route::middleware(['auth'])->group(function () {
     // Marketing
     include __DIR__.'/Marketing/inputPOCustomer.php';
     include __DIR__.'/Marketing/orderConfirmation.php';
+    include __DIR__.'/Marketing/salesOrder.php';
 });
 
