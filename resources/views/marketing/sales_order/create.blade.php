@@ -69,7 +69,7 @@
                                                 id="orderSelect" style="width: 100%">
                                                 <option value="">** Please select a Order Confirmation</option>
                                                 @foreach ($orderPO as $data)
-                                                    <option value="{{ $data->order }}">{{ $data->order }}</option>
+                                                    <option value="{{ $data->order }}">{{ $data->order }} ( {{ ($data->all_product_details - $data->sales_order_details) }} of {{ ($data->all_product_details) }} )</option>
                                                 @endforeach
                                             </select>
                                         </div>

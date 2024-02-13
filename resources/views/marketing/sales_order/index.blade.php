@@ -68,7 +68,7 @@
                         <div class="card-body">
                             <input type="hidden" name="_token" id="csrf-token" value="{{ Session::token() }}" />
 
-                            <table id="po_customer_table" class="table table-bordered dt-responsive w-100 datatable-buttons"
+                            <table id="so_customer_table" class="table table-bordered w-100 datatable-buttons"
                                 style="font-size: small">
                                 <thead>
                                     <tr>
@@ -76,13 +76,18 @@
                                             <input type="checkbox" id="checkAllRows">
                                         </th>
                                         <th class="align-middle text-center">#</th>
-                                        <th class="align-middle text-center" data-name="po_number">PO<br>Number</th>
+                                        <th class="align-middle text-center" data-name="order_confirmation">
+                                            Order<br>Confirmation</th>
+                                        <th class="align-middle text-center" data-name="so_number">SO<br>Number</th>
                                         <th class="align-middle text-center" data-name="date">Date</th>
+                                        <th class="align-middle text-center" data-name="so_type">SO Type</th>
                                         <th class="align-middle text-center" data-name="customer">Customer</th>
                                         <th class="align-middle text-center" data-name="salesman">Salesman</th>
-                                        <th class="align-middle text-center" data-name="total_price">Total<br>Price</th>
-                                        <th class="align-middle text-center" data-name="ppn">PPN</th>
+                                        <th class="align-middle text-center" data-name="reference_number">
+                                            Reference<br>Number</th>
+                                        <th class="align-middle text-center">Progress</th>
                                         <th class="align-middle text-center" data-name="status">Status</th>
+                                        <th class="align-middle text-center">WO List</th>
                                         <th class="align-middle text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -144,7 +149,7 @@
     <script>
         $(document).ready(function() {
             var i = 1;
-            let dataTable = $('#po_customer_table').DataTable({
+            let dataTable = $('#so_customer_table').DataTable({
                 dom: '<"top d-flex"<"position-absolute top-0 end-0 d-flex"fl>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>><"clear:both">',
                 initComplete: function(settings, json) {
                     // Setelah DataTable selesai diinisialisasi
@@ -155,6 +160,7 @@
                 },
                 processing: true,
                 serverSide: true,
+                scrollX: true,
                 language: {
                     lengthMenu: "_MENU_",
                     search: "",
@@ -181,7 +187,7 @@
                 columns: [{
                         data: 'bulk-action',
                         name: 'bulk-action',
-                        className: 'align-middle text-center',
+                        // className: 'align-middle text-center',
                         orderable: false,
                         searchable: false
                     }, {
@@ -189,55 +195,75 @@
                         render: function(data, type, row, meta) {
                             return meta.row + meta.settings._iDisplayStart + 1;
                         },
+                        // className: 'align-middle text-center',
                         orderable: false,
                         searchable: false
                     },
                     {
+                        data: 'id_order_confirmations',
+                        name: 'reference_number',
+                        // className: 'align-middle text-center',
+                        orderable: true,
+                    },
+                    {
                         data: 'so_number',
                         name: 'so_number',
-                        className: 'align-middle text-center',
+                        // className: 'align-middle text-center',
                         orderable: true,
                     },
                     {
                         data: 'date',
                         name: 'date',
-                        className: 'align-middle text-center',
+                        // className: 'align-middle text-center',
+                        orderable: true,
+                    },
+                    {
+                        data: 'so_type',
+                        name: 'so_type',
+                        // className: 'align-middle text-center',
                         orderable: true,
                     },
                     {
                         data: 'customer',
                         name: 'customer',
-                        className: 'align-middle',
+                        // className: 'align-middle',
                         orderable: true,
                     },
                     {
                         data: 'salesman',
                         name: 'salesman',
-                        className: 'align-middle',
-                        orderable: true,
-                    },
-                    {
-                        data: 'due_date',
-                        name: 'due_date',
-                        className: 'align-middle text-center',
+                        // className: 'align-middle',
                         orderable: true,
                     },
                     {
                         data: 'reference_number',
                         name: 'reference_number',
-                        className: 'align-middle text-center',
+                        // className: 'align-middle',
                         orderable: true,
+                    },
+                    {
+                        data: 'progress',
+                        name: 'progress',
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         data: 'status',
                         name: 'status',
-                        className: 'align-middle text-center',
+                        // className: 'align-middle text-center',
                         orderable: true,
+                    },
+                    {
+                        data: 'wo_list',
+                        name: 'wo_list',
+                        // className: 'align-middle text-center',
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         data: 'action',
                         name: 'action',
-                        className: 'align-middle text-center',
+                        // className: 'align-middle text-center',
                         orderable: false,
                         searchable: false
                     },

@@ -21,7 +21,7 @@ $(document).ready(function () {
                     order_number: order_number
                 },
                 success: function (response) {
-                    // console.log(response);
+                    console.log(response);
                     let idMasterCustomer = response.order.id_master_customers;
                     let idMasterSalesman = response.order.id_master_salesmen;
                     let idMasterTermPayment = response.order.id_master_term_payments;
@@ -157,81 +157,6 @@ $(document).ready(function () {
     $("form").submit(function () {
         $("select").removeAttr("disabled");
     });
-
-    // $('.saveSalesOrder').on('click', function (e) {
-    //     e.preventDefault(); // Mencegah formulir terkirim secara default
-    //     $("select").removeAttr("disabled");
-    //     let action = $(this).attr('name')
-    //     var soType = $('#soTypeSelect').val(); // Ambil nilai so_type dari elemen dengan ID so_type
-
-    //     // Cek nilai so_type dan sesuaikan tampilan elemen
-    //     if (soType === 'Stock') {
-    //         $('#customerSelect').prop('disabled', true); // Sembunyikan bagian customer
-    //         $('#customerAddressSelect').prop('disabled', true); // Sembunyikan bagian customer address
-    //         $('#salesmanSelect').prop('disabled', true); // Sembunyikan bagian salesman
-    //     }
-
-    //     // Kumpulkan data dari formulir
-    //     var formDataArray = $('#formSalesOrder').serializeArray();
-
-    //     // Membuat objek dari array data formulir
-    //     var formData = {};
-    //     for (var i = 0; i < formDataArray.length; i++) {
-    //         formData[formDataArray[i].name] = formDataArray[i].value;
-    //     }
-
-    //     // Kumpulkan data dari baris yang terceklis
-    //     var selectedRowsData = [];
-    //     $('.rowCheckbox:checked').each(function () {
-    //         var rowData = {
-    //             // Sesuaikan properti berikut dengan data yang ingin Anda kirim
-    //             type_product: $(this).closest('tr').find('.typeProduct').text(),
-    //             id_master_products: $(this).closest('tr').find('.id-master-product').text(),
-    //             cust_product_code: $(this).closest('tr').find('.cust-product-code').text(),
-    //             qty: $(this).closest('tr').find('.qty').text(),
-    //             id_master_units: $(this).closest('tr').find('.id-master-unit').text(),
-    //             price: $(this).closest('tr').find('.price').text(),
-    //             subtotal: $(this).closest('tr').find('.subtotal').text(),
-    //             // Tambahkan properti lain sesuai kebutuhan
-    //         };
-    //         selectedRowsData.push(rowData);
-    //     });
-
-    //     // Gabungkan data dari formulir dan baris tabel
-    //     var combinedData = {
-    //         formData: formData,
-    //         selectedRowsData: selectedRowsData
-    //     };
-
-    //     // Kirim data menggunakan AJAX
-    //     $.ajax({
-    //         type: 'POST',
-    //         url: baseRoute + '/marketing/salesOrder/',
-    //         // url: $(this).attr('action'), // Ambil URL dari formulir
-    //         data: {
-    //             combinedData: combinedData,
-    //             action: action,
-    //             _token: $('meta[name="csrf-token"]').attr('content')
-    //         },
-    //         // dataType: 'json',
-    //         success: function (response) {
-    //             // Tindakan setelah pengiriman berhasil
-    //             console.log(response);
-    //             // Periksa apakah Anda harus mengarahkan ke route create atau index
-    //             // if (response.redirectTo === 'create') {
-    //             //     // Arahkan ke route create
-    //             //     window.location.href = '/marketing/salesOrder/create';
-    //             // } else if (response.redirectTo === 'index') {
-    //             //     // Arahkan ke route index
-    //             //     window.location.href = '/marketing/salesOrder';
-    //             // }
-    //         },
-    //         error: function (error) {
-    //             // Tangani kesalahan jika diperlukan
-    //             console.error('Error:', error);
-    //         }
-    //     });
-    // });
 });
 
 // Fungsi untuk menampilkan/sembunyikan elemen berdasarkan nilai so_type
@@ -309,7 +234,16 @@ function getDetailOrder(order_number, response) {
             let description = displaySearchResult(details[i].type_product, details[i].id_master_product);
             const custProductCode = details[i].cust_product_code !== null ? details[i].cust_product_code : '';
 
-            $('#productTable').append('<tr class="row-check"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id + '" readonly>' + description + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle"><input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '"></td></tr>');
+            // Check if the product is in response.compare
+            let isInCompare = response.compare.some(compareProduct =>
+                compareProduct.id_master_products === details[i].id_master_product && compareProduct.type_product === details[i].type_product
+            );
+
+            // Add a condition to show or hide the checkbox
+            let checkboxHtml = isInCompare ? '' : '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '">';
+            let tableColor = isInCompare ? 'table-danger' : '';
+
+            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
 
         }
 

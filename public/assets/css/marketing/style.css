@@ -164,3 +164,7 @@ input[type="checkbox"]:hover {
 .row-check {
     cursor: pointer;
 }
+
+.row-check.table-danger {
+    cursor: default;
+}
