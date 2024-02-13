@@ -45,19 +45,21 @@ class salesOrderController extends Controller
             $query = DB::table('sales_orders as a')
                 ->join('master_customers as b', 'a.id_master_customers', '=', 'b.id')
                 ->join('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
-                ->select('a.id', 'a.so_number', 'a.date', 'b.name as customer', 'c.name as salesman', 'a.due_date', 'a.reference_number', 'a.status')
+                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status')
                 ->orderBy($columns[$orderColumn], $orderDirection);
 
             // Handle pencarian
             if ($request->has('search') && $request->input('search')) {
                 $searchValue = $request->input('search');
                 $query->where(function ($query) use ($searchValue) {
-                    $query->where('a.so_number', 'like', '%' . $searchValue . '%')
+                    $query->where('a.id_order_confirmations', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.so_number', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.date', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.so_type', 'like', '%' . $searchValue . '%')
                         ->orWhere('b.name', 'like', '%' . $searchValue . '%')
                         ->orWhere('c.name', 'like', '%' . $searchValue . '%')
-                        ->orWhere('a.due_date', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.reference_number', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.due_date', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.status', 'like', '%' . $searchValue . '%');
                 });
             }
@@ -67,14 +69,21 @@ class salesOrderController extends Controller
                     return view('marketing.sales_order.action', compact('data'));
                 })
                 ->addColumn('bulk-action', function ($data) {
-                    $checkBox = $data->status == 'Request' ? '<input type="checkbox" name="checkbox" data-po-number="' . $data->po_number . '" />' : '';
+                    $checkBox = $data->status == 'Request' ? '<input type="checkbox" name="checkbox" data-so-number="' . $data->so_number . '" />' : '';
                     return $checkBox;
+                })
+                ->addColumn('progress', function ($data) {
+                    return '<span style="font-size: smaller;width: 100%"><b>Due Date: </b>' . $data->due_date . '</span>';
                 })
                 ->addColumn('status', function ($data) {
                     $badgeColor = $data->status == 'Request' ? 'info' : 'success';
                     return '<span class="badge bg-' . $badgeColor . '" style="font-size: smaller;width: 100%">' . $data->status . '</span>';
                 })
-                ->rawColumns(['bulk-action', 'status'])
+                ->addColumn('wo_list', function ($data) {
+                    $woList = $data->status == 'Request' ? 'Please Wait So Posted' : 'WO&nbspList';
+                    return '<button type="button" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">'. $woList .'</button>';
+                })
+                ->rawColumns(['bulk-action', 'progress', 'status', 'wo_list'])
                 ->make(true);
         }
         return view('marketing.sales_order.index');
@@ -90,6 +99,8 @@ class salesOrderController extends Controller
         $customers = $this->getAllCustomers();
         $salesmans = $this->getAllSalesman();
         $termPayments = $this->getAllTermPayment();
+
+        // dd($orderPO);
 
         return view('marketing.sales_order.create', compact('orderPO', 'customers', 'salesmans', 'termPayments'));
     }
@@ -160,9 +171,9 @@ class salesOrderController extends Controller
             DB::commit();
 
             if ($request->has('save_add_more')) {
-                return redirect()->back()->with(['success' => 'Success Create New Sales Order' . $request->so_number]);
+                return redirect()->back()->with(['success' => 'Success Create New Sales Order ' . $request->so_number]);
             } else {
-                return redirect()->route('marketing.salesOrder.index')->with(['success' => 'Success Create New Sales Order' . $request->so_number]);
+                return redirect()->route('marketing.salesOrder.index')->with(['success' => 'Success Create New Sales Order ' . $request->so_number]);
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -213,6 +224,38 @@ class salesOrderController extends Controller
                     ->where('status', 'Posted')
             )
             ->get();
+
+        foreach ($combinedDataOrder_PO as $key => $value) {
+            // Ambil detail produk dari sales_order_detail
+            $salesOrderDetails = DB::table('sales_orders as a')
+                ->join('sales_order_details as b', 'a.so_number', '=', 'b.id_sales_orders')
+                ->select('a.id_order_confirmations', 'a.so_number', 'b.id_sales_orders', 'b.type_product', 'b.id_master_products')
+                ->where('a.id_order_confirmations', $value->order)
+                ->count();
+
+            if (substr($value->order, 0, 2) == 'PO') {
+                // Ambil detail produk dari input_po_customer_detail
+                $orders = DB::table('input_po_customer_details')
+                    ->where('po_number', $value->order)
+                    ->count();
+            } else if (substr($value->order, 0, 2) == 'KO') {
+                // Ambil detail produk dari order_confirmation_detail
+                $orders = DB::table('order_confirmation_details')
+                    ->where('oc_number', $value->order)
+                    ->count();
+            }
+            // Tambahkan properti baru ke $combinedDataOrder_PO
+            $value->sales_order_details = $salesOrderDetails;
+            $value->all_product_details = $orders;
+
+            // Skip jika selisih sama dengan 0
+            if (($value->all_product_details - $value->sales_order_details) === 0) {
+                unset($combinedDataOrder_PO[$key]);
+            }
+        }
+        // Reset index array setelah unset
+        // $combinedDataOrder_PO = array_values($combinedDataOrder_PO);
+
         // return response()->json(['customers' => $customers]);
         return $combinedDataOrder_PO;
     }
@@ -268,7 +311,9 @@ class salesOrderController extends Controller
             )
             ->get();
 
-        return response()->json(['order' => $order, 'customers' => $customers, 'salesmans' => $salesmans, 'termPayments' => $termPayments, 'products' => $combinedDataProducts]);
+        $compareData = $this->compareDetails($order_number);
+
+        return response()->json(['order' => $order, 'customers' => $customers, 'salesmans' => $salesmans, 'termPayments' => $termPayments, 'products' => $combinedDataProducts, 'compare' => $compareData]);
     }
 
     public function generateSONumber()
@@ -293,5 +338,17 @@ class salesOrderController extends Controller
 
         // Gunakan $newCode sesuai kebutuhan Anda
         return response()->json(['code' => $newCode]);
+    }
+
+    public function compareDetails($idOrderConfirmation)
+    {
+        // Ambil detail produk dari sales_order_detail
+        $salesOrderDetails = DB::table('sales_orders as a')
+            ->join('sales_order_details as b', 'a.so_number', '=', 'b.id_sales_orders')
+            ->select('a.id_order_confirmations', 'a.so_number', 'b.id_sales_orders', 'b.type_product', 'b.id_master_products')
+            ->where('a.id_order_confirmations', $idOrderConfirmation)
+            ->get();
+
+        return $salesOrderDetails;
     }
 }
