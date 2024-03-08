@@ -189,6 +189,7 @@
                         render: function(data, type, row, meta) {
                             return meta.row + meta.settings._iDisplayStart + 1;
                         },
+                        className: 'align-middle text-center',
                         orderable: false,
                         searchable: false
                     },

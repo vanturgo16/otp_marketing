@@ -6,11 +6,11 @@
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0 font-size-18">Add Order Confirmation</h4>
+                        <h4 class="mb-sm-0 font-size-18">Edit Order Confirmation</h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
                                 <li class="breadcrumb-item"><a href="javascript: void(0);">Marketing</a></li>
-                                <li class="breadcrumb-item active">Add Order Confirmation</li>
+                                <li class="breadcrumb-item active">Edit Order Confirmation</li>
                             </ol>
                         </div>
                     </div>
@@ -54,26 +54,27 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card">
-                        <form action="{{ route('marketing.orderConfirmation.store') }}" method="POST">
+                        <form action="{{ route('marketing.orderConfirmation.update') }}" method="POST">
                             @csrf
+                            @method('PUT')
                             <div class="card-header">
-                                <i class="mdi mdi-file-multiple-outline label-icon"></i> Add Order Confirmation
+                                <i class="mdi mdi-file-multiple-outline label-icon"></i> Edit Order Confirmation
                             </div>
 
                             <div class="card-body">
                                 <div class="mt-4 mt-lg-0">
                                     <div class="row mb-4 field-wrapper required-field">
-                                        <label for="ocNumber" class="col-sm-3 col-form-label">OC Number</label>
+                                        <label for="oc_number" class="col-sm-3 col-form-label">PO Number</label>
                                         <div class="col-sm-9">
-                                            <input type="text" class="form-control" name="oc_number" id="ocNumber"
-                                                value="{{ $kodeOtomatis }}" required readonly>
+                                            <input type="text" class="form-control" name="oc_number" id="oc_number"
+                                                value="{{ $orderConfirmation->oc_number }}" required readonly>
                                         </div>
                                     </div>
                                     <div class="row mb-4 field-wrapper required-field">
                                         <label for="date" class="col-sm-3 col-form-label">Date</label>
                                         <div class="col-sm-9">
                                             <input type="date" class="form-control" name="date" id="date"
-                                                value="{{ date('Y-m-d') }}" required>
+                                                value="{{ date($orderConfirmation->date) }}" required>
                                         </div>
                                     </div>
                                     <div class="row mb-4 field-wrapper required-field">
@@ -83,7 +84,9 @@
                                                 id="customerSelect" style="width: 100%" required>
                                                 <option value="">** Please select a Customers</option>
                                                 @foreach ($customers as $customer)
-                                                    <option value="{{ $customer->id }}">{{ $customer->customer_code }} -
+                                                    <option value="{{ $customer->id }}"
+                                                        {{ $customer->id == $orderConfirmation->id_master_customers ? 'selected' : '' }}>
+                                                        {{ $customer->customer_code }} -
                                                         {{ $customer->name }}</option>
                                                 @endforeach
                                             </select>
@@ -96,7 +99,9 @@
                                                 id="salesmanSelect" style="width: 100%" required>
                                                 <option value="">** Please select a Salesman</option>
                                                 @foreach ($salesmans as $salesman)
-                                                    <option value="{{ $salesman->id }}">{{ $salesman->name }}</option>
+                                                    <option value="{{ $salesman->id }}"
+                                                        {{ $salesman->id == $orderConfirmation->id_master_salesmen ? 'selected' : '' }}>
+                                                        {{ $salesman->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -108,7 +113,8 @@
                                                 id="termPaymentSelect" style="width: 100%" required>
                                                 <option value="">** Please select a Term Payment</option>
                                                 @foreach ($termPayments as $termPayment)
-                                                    <option value="{{ $termPayment->id }}">
+                                                    <option value="{{ $termPayment->id }}"
+                                                        {{ $termPayment->id == $orderConfirmation->id_master_term_payments ? 'selected' : '' }}>
                                                         {{ $termPayment->term_payment }}
                                                     </option>
                                                 @endforeach
@@ -122,7 +128,9 @@
                                                 id="currencySelect" style="width: 100%" required>
                                                 <option value="">** Please select a Currency</option>
                                                 @foreach ($currencies as $currency)
-                                                    <option value="{{ $currency->id }}">{{ $currency->currency }}
+                                                    <option value="{{ $currency->id }}"
+                                                        {{ $currency->id == $orderConfirmation->id_master_currencies ? 'selected' : '' }}>
+                                                        {{ $currency->currency }}
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -134,15 +142,19 @@
                                             <select class="form-control data-select2" name="ppn" id="ppnSelect"
                                                 style="width: 100%" required>
                                                 <option value="">** Please select a Ppn</option>
-                                                <option value="Include">Inclue</option>
-                                                <option value="Exclude">Exclude</option>
+                                                <option value="Include"
+                                                    {{ $orderConfirmation->ppn == 'Include' ? 'selected' : '' }}>Inclue
+                                                </option>
+                                                <option value="Exclude"
+                                                    {{ $orderConfirmation->ppn == 'Exclude' ? 'selected' : '' }}>Exclude
+                                                </option>
                                             </select>
                                         </div>
                                     </div>
                                     <div class="row mb-4 field-wrapper">
                                         <label for="remark" class="col-sm-3 col-form-label">Remark</label>
                                         <div class="col-sm-9">
-                                            <textarea class="form-control" name="remark" id="remark" rows="5"></textarea>
+                                            <textarea class="form-control" name="remark" id="remark" rows="5">{{ $orderConfirmation->remark }}</textarea>
                                         </div>
                                     </div>
                                     <div class="row mb-4 field-wrapper required-field">
@@ -274,7 +286,8 @@
                                                                 onclick="cloneRow()">Add More Product</button>
                                                             <span class="fs-3">Total Price : <span
                                                                     id="totalAmount">0</span></span>
-                                                            <input type="hidden" name="total_price" class="totalPrice">
+                                                            <input type="hidden" name="total_price" class="totalPrice"
+                                                                value="{{ $orderConfirmation->total_price }}">
                                                         </div>
                                                     </th>
                                                 </tr>
@@ -293,10 +306,10 @@
                                             <a href="{{ route('marketing.orderConfirmation.index') }}"
                                                 class="btn btn-light w-md"><i class="fas fa-arrow-left"></i>&nbsp;
                                                 Back</a>
-                                            <input type="submit" class="btn btn-primary w-md" value="Save & Add More"
-                                                name="save_add_more">
-                                            <input type="submit" class="btn btn-success w-md" value="Save"
-                                                name="save">
+                                            <input type="submit" class="btn btn-primary w-md" value="Update & Add More"
+                                                name="update_add_more">
+                                            <input type="submit" class="btn btn-success w-md" value="Update"
+                                                name="update">
                                         </div>
                                     </div>
                                 </div>
@@ -305,7 +318,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -315,7 +327,7 @@
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="staticBackdropLabel">Confirm to Deletion</h5>
+                    <h5 class="modal-title" id="staticBackdropLabel">Confirm Deletion</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">

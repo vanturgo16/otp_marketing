@@ -68,31 +68,33 @@
                         <div class="card-body">
                             <input type="hidden" name="_token" id="csrf-token" value="{{ Session::token() }}" />
 
-                            <table id="so_customer_table" class="table table-bordered w-100 datatable-buttons"
-                                style="font-size: small">
-                                <thead>
-                                    <tr>
-                                        <th class="align-middle text-center">
-                                            <input type="checkbox" id="checkAllRows">
-                                        </th>
-                                        <th class="align-middle text-center">#</th>
-                                        <th class="align-middle text-center" data-name="order_confirmation">
-                                            Order<br>Confirmation</th>
-                                        <th class="align-middle text-center" data-name="so_number">SO<br>Number</th>
-                                        <th class="align-middle text-center" data-name="date">Date</th>
-                                        <th class="align-middle text-center" data-name="so_type">SO Type</th>
-                                        <th class="align-middle text-center" data-name="customer">Customer</th>
-                                        <th class="align-middle text-center" data-name="salesman">Salesman</th>
-                                        <th class="align-middle text-center" data-name="reference_number">
-                                            Reference<br>Number</th>
-                                        <th class="align-middle text-center">Progress</th>
-                                        <th class="align-middle text-center" data-name="status">Status</th>
-                                        <th class="align-middle text-center">WO List</th>
-                                        <th class="align-middle text-center">Action</th>
-                                    </tr>
-                                </thead>
-
-                            </table>
+                            <div class="table-responsive">
+                                <table id="so_customer_table" class="table table-bordered w-100 datatable-buttons"
+                                    style="font-size: small">
+                                    <thead>
+                                        <tr>
+                                            <th class="align-middle text-center">
+                                                <input type="checkbox" id="checkAllRows">
+                                            </th>
+                                            <th class="align-middle text-center">#</th>
+                                            <th class="align-middle text-center" data-name="order_confirmation">
+                                                Order<br>Confirmation</th>
+                                            <th class="align-middle text-center" data-name="so_number">SO<br>Number</th>
+                                            <th class="align-middle text-center" data-name="date">Date</th>
+                                            <th class="align-middle text-center" data-name="so_type">SO Type</th>
+                                            <th class="align-middle text-center" data-name="customer">Customer</th>
+                                            <th class="align-middle text-center" data-name="salesman">Salesman</th>
+                                            <th class="align-middle text-center" data-name="reference_number">
+                                                Reference<br>Number</th>
+                                            <th class="align-middle text-center">Progress</th>
+                                            <th class="align-middle text-center" data-name="status">Status</th>
+                                            <th class="align-middle text-center">WO List</th>
+                                            <th class="align-middle text-center">Action</th>
+                                        </tr>
+                                    </thead>
+    
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -160,7 +162,7 @@
                 },
                 processing: true,
                 serverSide: true,
-                scrollX: true,
+                // scrollX: true,
                 language: {
                     lengthMenu: "_MENU_",
                     search: "",
@@ -201,7 +203,7 @@
                     },
                     {
                         data: 'id_order_confirmations',
-                        name: 'reference_number',
+                        name: 'id_order_confirmations',
                         // className: 'align-middle text-center',
                         orderable: true,
                     },

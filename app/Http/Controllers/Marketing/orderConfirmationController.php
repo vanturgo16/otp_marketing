@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Marketing;
 
+use Browser;
+use DataTables;
 use App\Http\Controllers\Controller;
 use App\Models\Marketing\orderConfirmation;
 use App\Models\Marketing\OrderConfirmationDetail;
@@ -13,24 +15,72 @@ use App\Models\MstUnits;
 use App\Traits\AuditLogsTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use  Browser;
+use Illuminate\Support\Facades\Crypt;
 
 class orderConfirmationController extends Controller
 {
     use AuditLogsTrait;
+    public function saveLogs($activityLog = null)
+    {
+        //Audit Log
+        $username = auth()->user()->email;
+        $ipAddress = $_SERVER['REMOTE_ADDR'];
+        $location = '0';
+        $access_from = Browser::browserName();
+        $activity = $activityLog;
+        $this->auditLogs($username, $ipAddress, $location, $access_from, $activity);
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $orderConfirmations = DB::table('order_confirmations as a')
-            ->join('master_customers as b', 'a.id_master_customers', '=', 'b.id')
-            ->join('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
-            ->select('a.id', 'a.oc_number', 'a.date', 'b.name as customer', 'c.name as salesman', 'a.total_price', 'a.ppn', 'a.status')
-            ->orderBy('a.oc_number', 'desc')
-            ->get();
+        if (request()->ajax()) {
+            $orderColumn = $request->input('order')[0]['column'];
+            $orderDirection = $request->input('order')[0]['dir'];
+            $columns = ['', '', 'oc_number', 'date', 'customer', 'salesman', 'total_price', 'ppn', 'status', ''];
 
-        return view('marketing.order_confirmation.index', compact('orderConfirmations'));
+            // Query dasar
+            $query = DB::table('order_confirmations as a')
+                ->join('master_customers as b', 'a.id_master_customers', '=', 'b.id')
+                ->join('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
+                ->select('a.id', 'a.oc_number', 'a.date', 'b.name as customer', 'c.name as salesman', 'a.total_price', 'a.ppn', 'a.status')
+                ->orderBy($columns[$orderColumn], $orderDirection);
+
+            // Handle pencarian
+            if ($request->has('search') && $request->input('search')) {
+                $searchValue = $request->input('search');
+                $query->where(function ($query) use ($searchValue) {
+                    $query->where('a.oc_number', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.date', 'like', '%' . $searchValue . '%')
+                        ->orWhere('b.name', 'like', '%' . $searchValue . '%')
+                        ->orWhere('c.name', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.total_price', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.ppn', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.status', 'like', '%' . $searchValue . '%');
+                });
+            }
+
+            return DataTables::of($query)
+                ->addColumn('action', function ($data) {
+                    return view('marketing.order_confirmation.action', compact('data'));
+                })
+                ->addColumn('bulk-action', function ($data) {
+                    $checkBox = $data->status == 'Request' ? '<input class="rowCheckbox" type="checkbox" name="checkbox" data-oc-number="' . $data->oc_number . '" />' : '';
+                    return $checkBox;
+                })
+                ->addColumn('status', function ($data) {
+                    $badgeColor = $data->status == 'Request' ? 'info' : 'success';
+                    return '<span class="badge bg-' . $badgeColor . '" style="font-size: smaller;width: 100%">' . $data->status . '</span>';
+                })
+                ->addColumn('statusLabel', function ($data) {
+                    return $data->status;
+                })
+                ->rawColumns(['bulk-action', 'status', 'statusLabel'])
+                ->make(true);
+        }
+        return view('marketing.order_confirmation.index');
     }
 
     /**
@@ -38,7 +88,8 @@ class orderConfirmationController extends Controller
      */
     public function create()
     {
-        $customers = MstCustomers::get();
+        // $customers = MstCustomers::get();
+        $customers = $this->getAllCustomers();
         $salesmans = $this->getAllSalesman();
         $termPayments = $this->getAllTermPayment();
         $currencies = $this->getAllCurrency();
@@ -115,33 +166,61 @@ class orderConfirmationController extends Controller
                 ]);
             }
 
+            $this->saveLogs('Adding New Order Confirmation : ' . $request->oc_number);
+
             DB::commit();
 
             if ($request->has('save_add_more')) {
-                return redirect()->back()->with(['success' => 'Success Create New Order Confirmation']);
+                return redirect()->back()->with(['success' => 'Success Create New Order Confirmation ' . $request->oc_number]);
             } else {
-                return redirect()->route('marketing.orderConfirmation.index')->with(['success' => 'Success Create New Order Confirmation']);
+                return redirect()->route('marketing.orderConfirmation.index')->with(['success' => 'Success Create New Order Confirmation ' . $request->oc_number]);
             }
         } catch (\Exception $e) {
             dd($e);
-            return redirect()->back()->with(['fail' => 'Failed to Create New Order Confirmation!']);
+            return redirect()->back()->with(['fail' => 'Failed to Create New Order Confirmation! ' . $request->oc_number]);
         }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(orderConfirmation $orderConfirmation)
+    public function show(orderConfirmation $orderConfirmation, $encryptedOCNumber)
     {
-        //
+        // Dekripsi data
+        $oc_number = Crypt::decrypt($encryptedOCNumber);
+
+        $customers = $this->getAllCustomers();
+        $salesmans = $this->getAllSalesman();
+        $termPayments = $this->getAllTermPayment();
+        $currencies = $this->getAllCurrency();
+        $units = $this->getAllUnit();
+
+        $orderConfirmation = orderConfirmation::with('orderConfirmationDetails', 'masterCustomer')
+            ->where('oc_number', $oc_number)
+            ->first();
+
+        return view('marketing.order_confirmation.show', compact('customers', 'salesmans', 'termPayments', 'currencies', 'units', 'orderConfirmation'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(orderConfirmation $orderConfirmation)
+    public function edit(orderConfirmation $orderConfirmation, $encryptedOCNumber)
     {
-        //
+        // Dekripsi data
+        $oc_number = Crypt::decrypt($encryptedOCNumber);
+
+        $customers = $this->getAllCustomers();
+        $salesmans = $this->getAllSalesman();
+        $termPayments = $this->getAllTermPayment();
+        $currencies = $this->getAllCurrency();
+        $units = $this->getAllUnit();
+
+        $orderConfirmation = orderConfirmation::with('orderConfirmationDetails')
+            ->where('oc_number', $oc_number)
+            ->first();
+
+        return view('marketing.order_confirmation.edit', compact('customers', 'salesmans', 'termPayments', 'currencies', 'units', 'orderConfirmation'));
     }
 
     /**
@@ -149,7 +228,99 @@ class orderConfirmationController extends Controller
      */
     public function update(Request $request, orderConfirmation $orderConfirmation)
     {
-        //
+        // dd($request->oc_number);
+
+        $oc_number = $request->oc_number;
+        // Mulai transaksi database
+        DB::beginTransaction();
+
+        try {
+            // Hapus detail orderConfirmationDetails sesuai oc_number
+            // OrderConfirmationDetail::where('oc_number', $oc_number)->delete();
+
+            // Update data orderConfirmation
+            $orderConfirmation = orderConfirmation::where('oc_number', $oc_number)->first();
+            $orderConfirmation->update([
+                'oc_number' => $request->oc_number,
+                'date' => $request->date,
+                'total_price' => $request->total_price,
+                'id_master_customers' => $request->id_master_customers,
+                'id_master_salesmen' => $request->id_master_salesmen,
+                'id_master_term_payments' => $request->id_master_term_payments,
+                'id_master_currencies' => $request->id_master_currencies,
+                'ppn' => $request->ppn,
+                'remark' => $request->remark,
+                'status' => $request->status,
+                // tambahkan kolom lainnya sesuai kebutuhan
+            ]);
+
+            // Simpan detail baru ke dalam orderConfirmationDetails
+            foreach ($request->type_product as $index => $typeProduct) {
+                $idMasterProduct = $request->id_master_products[$index];
+
+                // Cek apakah data dengan id_master_product sudah ada
+                $existingDetail = OrderConfirmationDetail::where('oc_number', $oc_number)
+                    ->where('id_master_product', $idMasterProduct)
+                    ->first();
+
+                if ($existingDetail) {
+                    // Jika sudah ada, update data tersebut
+                    $existingDetail->update([
+                        'type_product' => $typeProduct,
+                        'id_master_product' => $request->id_master_products[$index],
+                        'cust_product_code' => $request->cust_product_code[$index],
+                        'qty' => $request->qty[$index],
+                        'id_master_units' => $request->id_master_units[$index],
+                        'price' => $request->price[$index],
+                        'subtotal' => $request->subtotal[$index],
+                    ]);
+                } else {
+                    // Jika belum ada, insert data baru
+                    OrderConfirmationDetail::create([
+                        'oc_number' => $oc_number,
+                        'type_product' => $typeProduct,
+                        'id_master_product' => $request->id_master_products[$index],
+                        'cust_product_code' => $request->cust_product_code[$index],
+                        'qty' => $request->qty[$index],
+                        'id_master_units' => $request->id_master_units[$index],
+                        'price' => $request->price[$index],
+                        'subtotal' => $request->subtotal[$index],
+                    ]);
+                }
+
+                // OrderConfirmationDetail::create([
+                //     'oc_number' => $oc_number,
+                //     'type_product' => $typeProduct,
+                //     'id_master_product' => $request->id_master_products[$index],
+                //     'cust_product_code' => $request->cust_product_code[$index],
+                //     'qty' => $request->qty[$index],
+                //     'id_master_units' => $request->id_master_units[$index],
+                //     'price' => $request->price[$index],
+                //     'subtotal' => $request->subtotal[$index],
+                // ]);
+            }
+
+            // Hapus data orderConfirmationDetails yang tidak ada dalam data baru
+            $existingProductIds = collect($request->id_master_products);
+            OrderConfirmationDetail::where('oc_number', $oc_number)
+                ->whereNotIn('id_master_product', $existingProductIds)
+                ->delete();
+
+
+            $this->saveLogs('Edit Order Confirmation : ' . $oc_number);
+            // Commit transaksi jika berhasil
+            DB::commit();
+
+            if ($request->has('update_add_more')) {
+                return redirect()->route('marketing.orderConfirmation.create')->with(['success' => 'Success Update Order Confirmation ' . $oc_number]);
+            } else {
+                return redirect()->route('marketing.orderConfirmation.index')->with(['success' => 'Success Update Order Confirmation ' . $oc_number]);
+            }
+        } catch (\Exception $e) {
+            // Rollback transaksi jika terjadi kesalahan
+            DB::rollback();
+            return redirect()->back()->with(['fail' => 'Failed to Update Order Confirmation! ' . $oc_number]);
+        }
     }
 
     /**
@@ -160,13 +331,14 @@ class orderConfirmationController extends Controller
         //
     }
 
-    public function getCustomers()
+    public function getAllCustomers()
     {
         $customers = MstCustomers::select('id', 'customer_code', 'name')
             ->where('status', 'active')
             ->orderBy('customer_code', 'asc')
             ->get();
-        return response()->json(['customers' => $customers]);
+        // return response()->json(['customers' => $customers]);
+        return $customers;
     }
 
     public function getAllSalesman()
@@ -276,5 +448,159 @@ class orderConfirmationController extends Controller
                 ->first();
         }
         return response()->json(['product' => $product]);
+    }
+
+    public function getDataOrderConfirmation()
+    {
+        $oc_number = request()->get('oc_number');
+        $customerId = request()->get('customer_select');
+        $customer = $customerId ? MstCustomers::find($customerId) : null;
+        // $customer = MstCustomers::find(request()->get('customer_select'));
+        $salesmans = $this->getAllSalesman();
+        $termPayments = $this->getAllTermPayment();
+        $currencies = $this->getAllCurrency();
+        $units = $this->getAllUnit();
+        $orderConfirmation = orderConfirmation::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit')
+            ->where('oc_number', $oc_number)
+            ->first();
+
+        $combinedDataProducts = DB::table('master_product_fgs')
+            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"))
+            ->where('status', 'Active')
+            ->unionAll(
+                DB::table('master_wips')
+                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"))
+                    ->where('status', 'Active')
+            )
+            ->get();
+
+        // You can then use $combinedData as needed.
+
+        return response()->json(['orderConfirmation' => $orderConfirmation, 'salesmans' => $salesmans, 'termPayments' => $termPayments, 'currencies' => $currencies, 'units' => $units, 'products' => $combinedDataProducts, 'customer' => $customer]);
+    }
+
+    public function bulkPosted(Request $request)
+    {
+        $oc_numbers = $request->input('oc_numbers');
+
+        DB::beginTransaction();
+        try {
+            // Lakukan logika untuk melakukan bulk update status di sini
+
+            // Contoh: Update status menjadi 'Posted'
+            orderConfirmation::whereIn('oc_number', $oc_numbers)
+                ->update(['status' => 'Posted', 'updated_at' => now()]);
+
+            // Ambil data yang diupdate beserta detailnya
+            // $updatedData = orderConfirmation::with('inputPOCustomerDetails')
+            //     ->whereIn('oc_number', $oc_numbers)
+            //     ->get();
+
+            // $oc_number = $this->generateCodeKO();
+
+            // Simpan data ke dalam tabel order_confirmation dan order_confirmation_detail
+            // foreach ($updatedData as $poCustomer) {
+            //     // Simpan data ke dalam order_confirmation
+            //     $orderConfirmation = OrderConfirmation::create([
+            //         'oc_number' => $oc_number,
+            //         'oc_number' => $poCustomer->oc_number,
+            //         'date' => $poCustomer->date, //diambil dari po customer / buat ketika klik posted?
+            //         'total_price' => $poCustomer->total_price,
+            //         'id_master_customers' => $poCustomer->id_master_customers,
+            //         'id_master_salesmen' => $poCustomer->id_master_salesmen,
+            //         'id_master_term_payments' => $poCustomer->id_master_term_payments,
+            //         'id_master_currencies' => $poCustomer->id_master_currencies,
+            //         'ppn' => $poCustomer->ppn,
+            //         'remark' => $poCustomer->remark, //diambil dari po customer / buat ketika klik posted?
+            //         'status' => $poCustomer->status, //request / posted?
+            //     ]);
+
+            //     // Simpan detail ke dalam order_confirmation_detail
+            //     foreach ($poCustomer->inputPOCustomerDetails as $detail) {
+            //         orderConfirmationDetail::create([
+            //             'oc_number' => $oc_number,
+            //             'type_product' => $detail->type_product,
+            //             'id_master_product' => $detail->id_master_product,
+            //             'cust_product_code' => $detail->cust_product_code,
+            //             'qty' => $detail->qty,
+            //             'id_master_units' => $detail->id_master_units,
+            //             'price' => $detail->price,
+            //             'subtotal' => $detail->subtotal,
+            //         ]);
+            //     }
+            // }
+
+            // ...
+
+            DB::commit();
+            $this->saveLogs('Changed Order Confirmation ' . implode(', ', $oc_numbers) . ' to posted');
+
+            return response()->json(['message' => 'Change to posted successful', 'type' => 'success'], 200);
+        } catch (\Exception $e) {
+            // Tangani kesalahan jika diperlukan
+            return response()->json(['error' => 'Error updating to posted', 'type' => 'error'], 500);
+        }
+    }
+
+    public function bulkUnPosted(Request $request)
+    {
+        $oc_numbers = $request->input('oc_numbers');
+
+        DB::beginTransaction();
+        try {
+            // Lakukan logika untuk melakukan bulk update status di sini
+
+            // Contoh: Update status menjadi 'Posted'
+            orderConfirmation::whereIn('oc_number', $oc_numbers)
+                ->update(['status' => 'Un Posted', 'updated_at' => now()]);
+
+            $this->saveLogs('Changed Order Confirmation ' . implode(', ', $oc_numbers) . ' to unposted');
+
+            DB::commit();
+            return response()->json(['message' => 'Change to unposted successful', 'type' => 'success'], 200);
+        } catch (\Exception $e) {
+            // Tangani kesalahan jika diperlukan
+            return response()->json(['error' => 'Error updating to unposted', 'type' => 'error'], 500);
+        }
+    }
+
+    public function bulkDeleted(Request $request)
+    {
+        $oc_numbers = $request->input('oc_numbers');
+
+        try {
+            // Hapus data POCustomer sesuai oc_number
+            orderConfirmation::whereIn('oc_number', $oc_numbers)->delete();
+
+            // Hapus data POCustomerDetail sesuai oc_number
+            OrderConfirmationDetail::whereIn('oc_number', $oc_numbers)->delete();
+
+            $this->saveLogs('Deleted Order Confirmation ' . implode(', ', $oc_numbers));
+
+            return response()->json(['message' => 'Successfully deleted data', 'type' => 'success'], 200);
+        } catch (\Exception $e) {
+            // Tangani kesalahan jika diperlukan
+            return response()->json(['error' => 'Failed to delete data', 'type' => 'error'], 500);
+        }
+    }
+
+    public function preview($encryptedOCNumber)
+    {
+        $oc_number = Crypt::decrypt($encryptedOCNumber);
+        $orderConfirmation = orderConfirmation::with('orderConfirmationDetails.masterUnit', 'masterSalesman')
+            ->where('oc_number', $oc_number)
+            ->first();
+        // dd($pu_customer);
+        return view('marketing.order_confirmation.preview', compact('orderConfirmation'));
+    }
+
+    public function print($encryptedOCNumber)
+    {
+        $oc_number = Crypt::decrypt($encryptedOCNumber);
+        $orderConfirmation = orderConfirmation::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit', 'masterSalesman')
+            ->where('oc_number', $oc_number)
+            ->first();
+        // dd($pu_customer);
+        return view('marketing.order_confirmation.print', compact('orderConfirmation'));
     }
 }

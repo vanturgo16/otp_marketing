@@ -10,11 +10,13 @@ use Illuminate\Http\Request;
 use App\Traits\AuditLogsTrait;
 use App\Models\MstTermPayments;
 use Illuminate\Support\Facades\DB;
+use App\Models\MstCustomersAddress;
 use App\Http\Controllers\Controller;
 use App\Models\Marketing\salesOrder;
 use App\Models\Marketing\InputPOCust;
-use App\Models\Marketing\orderConfirmation;
+use Illuminate\Support\Facades\Crypt;
 use App\Models\marketing\salesOrderDetail;
+use App\Models\Marketing\orderConfirmation;
 
 class salesOrderController extends Controller
 {
@@ -81,7 +83,7 @@ class salesOrderController extends Controller
                 })
                 ->addColumn('wo_list', function ($data) {
                     $woList = $data->status == 'Request' ? 'Please Wait So Posted' : 'WO&nbspList';
-                    return '<button type="button" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">'. $woList .'</button>';
+                    return '<button type="button" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">' . $woList . '</button>';
                 })
                 ->rawColumns(['bulk-action', 'progress', 'status', 'wo_list'])
                 ->make(true);
@@ -136,7 +138,7 @@ class salesOrderController extends Controller
                 'status' => $request->status,
                 'id_master_term_payments' => $request->id_master_term_payments,
                 // 'id_master_currencies' => $request->id_master_currencies,
-                'remark' => $request->remark,
+                'remarks' => $request->remark,
                 // 'approval_by' => $request->approval_by,
                 // 'unit_rate' => $request->unit_rate,
                 // 'entry_currency' => $request->entry_currency,
@@ -192,9 +194,26 @@ class salesOrderController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(salesOrder $salesOrder)
+    public function edit(salesOrder $salesOrder, $encryptedSONumber)
     {
-        //
+        // Dekripsi data
+        $SONumber = Crypt::decrypt($encryptedSONumber);
+
+        $orderPO = $this->getAllOrder_PO();
+        $customers = $this->getAllCustomers();
+        $salesmans = $this->getAllSalesman();
+        $termPayments = $this->getAllTermPayment();
+
+        $salesOrder = salesOrder::with('salesOrderDetails')
+            ->where('so_number', $SONumber)
+            ->first();
+
+        $customer_addresses = MstCustomersAddress::where('id_master_customers', $salesOrder->id_master_customers)->get();
+
+        // dd($customerAddresses);
+        // echo json_encode($salesOrder);exit;
+
+        return view('marketing.sales_order.edit', compact('customers', 'customer_addresses', 'salesmans', 'termPayments', 'salesOrder'));
     }
 
     /**
@@ -350,5 +369,34 @@ class salesOrderController extends Controller
             ->get();
 
         return $salesOrderDetails;
+    }
+
+    public function getDataSalesOrder()
+    {
+        $so_number = request()->get('so_number');
+        $sales_order = salesOrder::with('salesOrderDetails', 'salesOrderDetails.masterUnit')
+            ->where('so_number', $so_number)
+            ->first();
+
+        $order_number = request()->get('order_number');
+        if (substr($order_number, 0, 2) == 'PO') {
+            $order = InputPOCust::with('inputPOCustomerDetails', 'inputPOCustomerDetails.masterUnit', 'masterCustomerAddress')->where('po_number', $order_number)->first();
+        } else if (substr($order_number, 0, 2) == 'KO') {
+            $order = orderConfirmation::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit', 'masterCustomerAddress')->where('oc_number', $order_number)->first();
+        }
+
+        $combinedDataProducts = DB::table('master_product_fgs')
+            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"))
+            ->where('status', 'Active')
+            ->unionAll(
+                DB::table('master_wips')
+                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"))
+                    ->where('status', 'Active')
+            )
+            ->get();
+
+        $compareData = $this->compareDetails($sales_order->id_order_confirmations);
+
+        return response()->json(['order' => $sales_order, 'products' => $combinedDataProducts, 'compare' => $compareData]);
     }
 }

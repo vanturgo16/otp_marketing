@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Configuration | PT. OTP</title>
+    <title>Marketing | PT. OTP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- App favicon -->
@@ -561,7 +561,9 @@
             let baseRoute = '{{ url('') }}';
         </script>
         @if (request()->is('marketing/inputPOCust') || request()->is('marketing/inputPOCust/*'))
-            <script src="{{ asset('assets/js/marketing/script.js') }}"></script>
+            <script src="{{ asset('assets/js/marketing/input_po.js') }}"></script>
+        @elseif (request()->is('marketing/orderConfirmation') || request()->is('marketing/orderConfirmation/*'))
+            <script src="{{ asset('assets/js/marketing/order_confirmation.js') }}"></script>
         @elseif (request()->is('marketing/salesOrder/*'))
             <script src="{{ asset('assets/js/marketing/sales_order.js') }}"></script>
         @endif
