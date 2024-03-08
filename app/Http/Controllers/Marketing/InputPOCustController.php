@@ -520,43 +520,43 @@ class InputPOCustController extends Controller
                 ->update(['status' => 'Posted', 'updated_at' => now()]);
 
             // Ambil data yang diupdate beserta detailnya
-            $updatedData = InputPOCust::with('inputPOCustomerDetails')
-                ->whereIn('po_number', $poNumbers)
-                ->get();
+            // $updatedData = InputPOCust::with('inputPOCustomerDetails')
+            //     ->whereIn('po_number', $poNumbers)
+            //     ->get();
 
-            $oc_number = $this->generateCodeKO();
+            // $oc_number = $this->generateCodeKO();
 
             // Simpan data ke dalam tabel order_confirmation dan order_confirmation_detail
-            foreach ($updatedData as $poCustomer) {
-                // Simpan data ke dalam order_confirmation
-                $orderConfirmation = OrderConfirmation::create([
-                    'oc_number' => $oc_number,
-                    'po_number' => $poCustomer->po_number,
-                    'date' => $poCustomer->date, //diambil dari po customer / buat ketika klik posted?
-                    'total_price' => $poCustomer->total_price,
-                    'id_master_customers' => $poCustomer->id_master_customers,
-                    'id_master_salesmen' => $poCustomer->id_master_salesmen,
-                    'id_master_term_payments' => $poCustomer->id_master_term_payments,
-                    'id_master_currencies' => $poCustomer->id_master_currencies,
-                    'ppn' => $poCustomer->ppn,
-                    'remark' => $poCustomer->remark, //diambil dari po customer / buat ketika klik posted?
-                    'status' => $poCustomer->status, //request / posted?
-                ]);
+            // foreach ($updatedData as $poCustomer) {
+            //     // Simpan data ke dalam order_confirmation
+            //     $orderConfirmation = OrderConfirmation::create([
+            //         'oc_number' => $oc_number,
+            //         'po_number' => $poCustomer->po_number,
+            //         'date' => $poCustomer->date, //diambil dari po customer / buat ketika klik posted?
+            //         'total_price' => $poCustomer->total_price,
+            //         'id_master_customers' => $poCustomer->id_master_customers,
+            //         'id_master_salesmen' => $poCustomer->id_master_salesmen,
+            //         'id_master_term_payments' => $poCustomer->id_master_term_payments,
+            //         'id_master_currencies' => $poCustomer->id_master_currencies,
+            //         'ppn' => $poCustomer->ppn,
+            //         'remark' => $poCustomer->remark, //diambil dari po customer / buat ketika klik posted?
+            //         'status' => $poCustomer->status, //request / posted?
+            //     ]);
 
-                // Simpan detail ke dalam order_confirmation_detail
-                foreach ($poCustomer->inputPOCustomerDetails as $detail) {
-                    orderConfirmationDetail::create([
-                        'oc_number' => $oc_number,
-                        'type_product' => $detail->type_product,
-                        'id_master_product' => $detail->id_master_product,
-                        'cust_product_code' => $detail->cust_product_code,
-                        'qty' => $detail->qty,
-                        'id_master_units' => $detail->id_master_units,
-                        'price' => $detail->price,
-                        'subtotal' => $detail->subtotal,
-                    ]);
-                }
-            }
+            //     // Simpan detail ke dalam order_confirmation_detail
+            //     foreach ($poCustomer->inputPOCustomerDetails as $detail) {
+            //         orderConfirmationDetail::create([
+            //             'oc_number' => $oc_number,
+            //             'type_product' => $detail->type_product,
+            //             'id_master_product' => $detail->id_master_product,
+            //             'cust_product_code' => $detail->cust_product_code,
+            //             'qty' => $detail->qty,
+            //             'id_master_units' => $detail->id_master_units,
+            //             'price' => $detail->price,
+            //             'subtotal' => $detail->subtotal,
+            //         ]);
+            //     }
+            // }
 
             // ...
 

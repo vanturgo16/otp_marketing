@@ -21,7 +21,7 @@ $(document).ready(function () {
                     order_number: order_number
                 },
                 success: function (response) {
-                    console.log(response);
+                    // console.log(response);
                     let idMasterCustomer = response.order.id_master_customers;
                     let idMasterSalesman = response.order.id_master_salesmen;
                     let idMasterTermPayment = response.order.id_master_term_payments;
@@ -154,9 +154,33 @@ $(document).ready(function () {
         }
     });
 
-    $("form").submit(function () {
-        $("select").removeAttr("disabled");
+    // $("form").submit(function () {
+    //     $("select").removeAttr("disabled");
+    // });
+
+    $(document).on('submit', '#formSalesOrder', function (e) {
+        e.preventDefault(); // Mencegah formulir terkirim secara default
+
+        // Cek apakah ada setidaknya satu produk yang dicentang
+        var selectedRows = $('.rowCheckbox:checked');
+
+        if (selectedRows.length === 0) {
+            // Jika tidak ada produk yang dicentang, tampilkan pesan kesalahan
+            alert('Pilih setidaknya satu produk untuk melanjutkan.');
+        } else {
+            // Jika ada produk yang dicentang, lanjutkan dengan pengiriman form
+            $("select").removeAttr("disabled");
+            this.submit();
+        }
     });
+
+    const pathArray = window.location.pathname.split("/");
+    const segment_3 = pathArray[3];
+    if (segment_3 == 'show') {
+        viewSalesOrder();
+    } else if (segment_3 == 'edit') {
+        editSalesOrder();
+    }
 });
 
 // Fungsi untuk menampilkan/sembunyikan elemen berdasarkan nilai so_type
@@ -248,5 +272,27 @@ function getDetailOrder(order_number, response) {
         }
 
         $('#productTable').append('<tfoot><tr><td colspan="7" class="text-end text-black">Total Price</td><td class="text-end" colspan="2"><span id="totalPrice">0</span></td></tr></tfott>');
+    }
+}
+
+function editSalesOrder() {
+    so_number = $('#so_number').val();
+
+    if (so_number) {
+        $.ajax({
+            url: baseRoute + '/marketing/salesOrder/get-data-sales-order',
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                so_number: so_number,
+            },
+            success: function (response) {
+                console.log(response);
+                getDetailOrder(response.order.id_order_confirmations, response);
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+            }
+        });
     }
 }

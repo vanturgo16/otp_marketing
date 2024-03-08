@@ -16,7 +16,7 @@
             {{-- <button class="dropdown-item drpdwn-scn" onclick="modalPDF('{{ encrypt($data->so_number) }}')"><span
                     class="mdi mdi-printer"></span> | Preview or Print</button> --}}
             <a class="dropdown-item drpdwn-scn"
-                href="{{ route('marketing.inputPOCust.print', encrypt($data->so_number)) }}" target="_blank" rel="noopener noreferrer"><span
+                href="{{ route('marketing.salesOrder.print', encrypt($data->so_number)) }}" target="_blank" rel="noopener noreferrer"><span
                     class="mdi mdi-printer"></span> | Print</a>
         </li>
         @if ($data->status == 'Request')
@@ -28,14 +28,14 @@
             </li>
             <li>
                 <a class="dropdown-item drpdwn-pri"
-                    href="{{ route('marketing.inputPOCust.edit', encrypt($data->so_number)) }}"><span
+                    href="{{ route('marketing.salesOrder.edit', encrypt($data->so_number)) }}"><span
                         class="mdi mdi-circle-edit-outline"></span> | Edit
                     Data</a>
             </li>
         @endif
         <li>
             <a class="dropdown-item drpdwn"
-                href="{{ route('marketing.inputPOCust.view', encrypt($data->so_number)) }}"><span
+                href="{{ route('marketing.salesOrder.view', encrypt($data->so_number)) }}"><span
                     class="mdi mdi-eye"></span> | View Data</a>
         </li>
     </ul>

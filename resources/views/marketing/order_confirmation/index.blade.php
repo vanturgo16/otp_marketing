@@ -17,6 +17,20 @@
                 </div>
             </div>
 
+            <div class="alert alert-success alert-dismissible alert-label-icon label-arrow fade show d-none" role="alert"
+                id="alertSuccess">
+                <i class="mdi mdi-check-all label-icon"></i><strong>Success</strong> - <span
+                    class="alertMessage">{{ session('success') }}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <div class="alert alert-danger alert-dismissible alert-label-icon label-arrow fade show d-none" role="alert"
+                id="alertFail">
+                <i class="mdi mdi-block-helper label-icon"></i><strong>Failed</strong> - <span
+                    class="alertMessage">{{ session('fail') }}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
             @if (session('success'))
                 <div class="alert alert-success alert-dismissible alert-label-icon label-arrow fade show" role="alert">
                     <i class="mdi mdi-check-all label-icon"></i><strong>Success</strong> - {{ session('success') }}
@@ -52,74 +66,192 @@
                             </a>
                         </div>
                         <div class="card-body">
-                            <table id="" class="table table-bordered dt-responsive w-100 datatable-buttons"
-                                style="font-size: smaller">
+                            <input type="hidden" name="_token" id="csrf-token" value="{{ Session::token() }}" />
+
+                            <table id="order_confirmation_table" class="table table-bordered dt-responsive w-100 datatable-buttons"
+                                style="font-size: small">
                                 <thead>
                                     <tr>
-                                        <th class="align-middle text-center">No</th>
-                                        <th class="align-middle text-center">OC<br>Number</th>
-                                        <th class="align-middle text-center">Date</th>
-                                        <th class="align-middle text-center">Customer</th>
-                                        <th class="align-middle text-center">Salesman</th>
-                                        <th class="align-middle text-center">Total<br>Price</th>
-                                        <th class="align-middle text-center">PPN</th>
-                                        <th class="align-middle text-center">Status</th>
+                                        <th class="align-middle text-center">
+                                            <input type="checkbox" id="checkAllRows">
+                                        </th>
+                                        <th class="align-middle text-center">#</th>
+                                        <th class="align-middle text-center" data-name="po_number">OC<br>Number</th>
+                                        <th class="align-middle text-center" data-name="date">Date</th>
+                                        <th class="align-middle text-center" data-name="customer">Customer</th>
+                                        <th class="align-middle text-center" data-name="salesman">Salesman</th>
+                                        <th class="align-middle text-center" data-name="total_price">Total<br>Price</th>
+                                        <th class="align-middle text-center" data-name="ppn">PPN</th>
+                                        <th class="align-middle text-center" data-name="status">Status</th>
                                         <th class="align-middle text-center">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <?php $no = 0; ?>
-                                    @foreach ($orderConfirmations as $data)
-                                        <?php $no++; ?>
-                                        <tr>
-                                            <td class="align-middle text-center">{{ $no }}</td>
-                                            <td class="align-middle text-center">{{ $data->oc_number }}</td>
-                                            <td class="align-middle text-center"><b>{{ $data->date }}</b></td>
-                                            <td class="align-middle">{{ $data->customer }}</td>
-                                            <td class="align-middle">{{ $data->salesman }}</td>
-                                            <td class="align-middle text-center">{{ number_format($data->total_price, 0, ',', '.') }}
-                                            </td>
-                                            <td class="align-middle text-center">{{ $data->ppn }}</td>
-                                            <td class="align-middle text-center">{{ $data->status }}</td>
-                                            <td class="align-middle text-center">
-                                                <div class="btn-group" role="group">
-                                                    <button id="btnGroupDrop{{ $data->id }}" type="button"
-                                                        class="btn btn-sm btn-primary dropdown-toggle"
-                                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                                        Action <i class="mdi mdi-chevron-down"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu"
-                                                        aria-labelledby="btnGroupDrop{{ $data->id }}">
-                                                        <li>
-                                                            <a class="dropdown-item drpdwn-{{ $data->status == "Request" ? "scs" : "wrn"; }}" href="#"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#info{{ $data->id }}"><span
-                                                                    class="mdi mdi-arrow-left-top-bold"></span> | {{ $data->status == "Request" ? "Posted" : "Un Posted"; }}</a>
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item drpdwn-scn" href="#"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#update{{ $data->id }}"><span
-                                                                    class="mdi mdi-printer"></span> | Print</a>
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item drpdwn" href="#"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#update{{ $data->id }}"><span
-                                                                    class="mdi mdi-eye"></span> | View Data</a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
+
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
+    <!-- Static Backdrop Modal -->
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        role="dialog" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Confirm to Posted</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to posted this data?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary waves-effect btn-label waves-light"
+                        onclick="bulkPosted()"><i class="mdi mdi-arrow-right-top-bold label-icon"></i>Posted</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Static Backdrop Modal PDF -->
+    <div class="modal fade" id="modalPDF" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        role="dialog" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Preview or Print</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center fs-1">
+                    <a href="#" class="btn btn-primary waves-effect waves-light w-sm preview" target="_blank"
+                        rel="noopener noreferrer">
+                        <i class="mdi mdi-search-web d-block fs-1"></i> Preview
+                    </a>
+                    <a href="#" class="btn btn-success waves-effect waves-light w-sm print" target="_blank"
+                        rel="noopener noreferrer">
+                        <i class="mdi mdi-printer d-block fs-1"></i> Print
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            var i = 1;
+            let dataTable = $('#order_confirmation_table').DataTable({
+                dom: '<"top d-flex"<"position-absolute top-0 end-0 d-flex"fl>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>><"clear:both">',
+                initComplete: function(settings, json) {
+                    // Setelah DataTable selesai diinisialisasi
+                    // Tambahkan elemen kustom ke dalam DOM
+                    $('.top').prepend(
+                        `<div class='pull-left col-sm-12 col-md-5'><div class="btn-group mb-4"><button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-checkbox-multiple-marked-outline"></i> Bulk Actions</button><ul class="dropdown-menu"><li><button class="dropdown-item" data-status="Request" onclick="showModal(this, 'Delete');"><i class="mdi mdi-trash-can"></i> Delete</button></li><li><button class="dropdown-item" data-status="Request" onclick="showModal(this);"><i class="mdi mdi-check-bold"></i> Posted</button></li></ul></div></div>`
+                    );
+                },
+                processing: true,
+                serverSide: true,
+                language: {
+                    lengthMenu: "_MENU_",
+                    search: "",
+                    searchPlaceholder: "Search",
+                },
+                pageLength: 5,
+                lengthMenu: [
+                    [5, 10, 20, 25, 50, 100, 200, -1],
+                    [5, 10, 20, 25, 50, 100, 200, "All"]
+                ],
+                columnDefs: [{
+                    'orderable': false,
+                    'targets': 0
+                }], // hide sort icon on header of first column
+                aaSorting: [
+                    [2, 'desc']
+                ], // start to sort data in second column 
+                ajax: {
+                    url: baseRoute + '/marketing/orderConfirmation/',
+                    data: function(d) {
+                        d.search = $('input[type="search"]').val(); // Kirim nilai pencarian
+                    }
+                },
+                columns: [{
+                        data: 'bulk-action',
+                        name: 'bulk-action',
+                        className: 'align-middle text-center',
+                        orderable: false,
+                        searchable: false
+                    }, {
+                        data: null,
+                        render: function(data, type, row, meta) {
+                            return meta.row + meta.settings._iDisplayStart + 1;
+                        },
+                        className: 'align-middle text-center',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'oc_number',
+                        name: 'oc_number',
+                        className: 'align-middle text-center',
+                        orderable: true,
+                    },
+                    {
+                        data: 'date',
+                        name: 'date',
+                        className: 'align-middle text-center',
+                        orderable: true,
+                    },
+                    {
+                        data: 'customer',
+                        name: 'customer',
+                        className: 'align-middle',
+                        orderable: true,
+                    },
+                    {
+                        data: 'salesman',
+                        name: 'salesman',
+                        className: 'align-middle',
+                        orderable: true,
+                    },
+                    {
+                        data: 'total_price',
+                        name: 'total_price',
+                        className: 'align-middle text-center',
+                        render: function(data, type, row) {
+                            return Number(data).toLocaleString('id-ID');
+                        },
+                        orderable: true,
+                    },
+                    {
+                        data: 'ppn',
+                        name: 'ppn',
+                        className: 'align-middle text-center',
+                        orderable: true,
+                    },
+                    {
+                        data: 'status',
+                        name: 'status',
+                        className: 'align-middle text-center',
+                        orderable: true,
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
+                        className: 'align-middle text-center',
+                        orderable: false,
+                        searchable: false
+                    },
+                ],
+                bAutoWidth: false,
+                columnDefs: [{
+                    width: "10%",
+                    targets: [3]
+                }]
+            });
+        });
+    </script>
+@endpush
