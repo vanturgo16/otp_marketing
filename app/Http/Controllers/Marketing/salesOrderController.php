@@ -15,7 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Marketing\salesOrder;
 use App\Models\Marketing\InputPOCust;
 use Illuminate\Support\Facades\Crypt;
-use App\Models\marketing\salesOrderDetail;
+use App\Models\Marketing\salesOrderDetail;
 use App\Models\Marketing\orderConfirmation;
 
 class salesOrderController extends Controller
