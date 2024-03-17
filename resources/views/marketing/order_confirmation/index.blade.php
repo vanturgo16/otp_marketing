@@ -68,7 +68,8 @@
                         <div class="card-body">
                             <input type="hidden" name="_token" id="csrf-token" value="{{ Session::token() }}" />
 
-                            <table id="order_confirmation_table" class="table table-bordered dt-responsive w-100 datatable-buttons"
+                            <table id="order_confirmation_table"
+                                class="table table-hover table-bordered dt-responsive w-100 datatable-buttons"
                                 style="font-size: small">
                                 <thead>
                                     <tr>
@@ -162,8 +163,8 @@
                 },
                 pageLength: 5,
                 lengthMenu: [
-                    [5, 10, 20, 25, 50, 100, 200, -1],
-                    [5, 10, 20, 25, 50, 100, 200, "All"]
+                    [5, 10, 20, 25, 50, 100],
+                    [5, 10, 20, 25, 50, 100]
                 ],
                 columnDefs: [{
                     'orderable': false,
@@ -220,7 +221,7 @@
                     {
                         data: 'total_price',
                         name: 'total_price',
-                        className: 'align-middle text-center',
+                        className: 'align-middle text-end',
                         render: function(data, type, row) {
                             return Number(data).toLocaleString('id-ID');
                         },
@@ -246,6 +247,12 @@
                         searchable: false
                     },
                 ],
+                createdRow: function(row, data, dataIndex) {
+                    // Tambahkan class "table-success" ke tr jika statusnya "Posted"
+                    if (data.statusLabel === 'Posted') {
+                        $(row).addClass('table-success');
+                    }
+                },
                 bAutoWidth: false,
                 columnDefs: [{
                     width: "10%",

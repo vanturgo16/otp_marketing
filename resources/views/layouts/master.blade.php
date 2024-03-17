@@ -564,7 +564,7 @@
             <script src="{{ asset('assets/js/marketing/input_po.js') }}"></script>
         @elseif (request()->is('marketing/orderConfirmation') || request()->is('marketing/orderConfirmation/*'))
             <script src="{{ asset('assets/js/marketing/order_confirmation.js') }}"></script>
-        @elseif (request()->is('marketing/salesOrder/*'))
+        @elseif (request()->is('marketing/salesOrder') || request()->is('marketing/salesOrder/*'))
             <script src="{{ asset('assets/js/marketing/sales_order.js') }}"></script>
         @endif
     @endif
