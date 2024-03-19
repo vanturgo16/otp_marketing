@@ -168,3 +168,13 @@ input[type="checkbox"]:hover {
 .row-check.table-danger {
     cursor: default;
 }
+
+input[type="text"]:read-only,
+input[type="number"]:read-only {
+    background-color: rgb(225, 222, 222);
+}
+
+/* Disabled state */
+input:read-only {
+    cursor: not-allowed;
+}

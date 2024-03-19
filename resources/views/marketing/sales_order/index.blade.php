@@ -64,13 +64,25 @@
                                 class="btn btn-primary waves-effect btn-label waves-light">
                                 <i class="mdi mdi-plus-box label-icon"></i> Add New Data
                             </a>
+                            <a href="#" class="btn btn-secondary waves-effect btn-label waves-light" data-search = ""
+                                id="add_data" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> All Data
+                            </a>
+                            <a href="#" class="btn btn-success waves-effect btn-label waves-light"
+                                data-search = "Stock" id="so_stock" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Stock
+                            </a>
+                            <a href="#" class="btn btn-info waves-effect btn-label waves-light"
+                                data-search = "Reguler" id="so_customer" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Customer
+                            </a>
                         </div>
                         <div class="card-body">
                             <input type="hidden" name="_token" id="csrf-token" value="{{ Session::token() }}" />
 
                             <div class="table-responsive">
-                                <table id="so_customer_table" class="table table-bordered w-100 datatable-buttons"
-                                    style="font-size: small">
+                                <table id="so_customer_table" class="table table-hover table-bordered"
+                                    style="font-size: small; min-width: 90rem;">
                                     <thead>
                                         <tr>
                                             <th class="align-middle text-center">
@@ -86,13 +98,14 @@
                                             <th class="align-middle text-center" data-name="salesman">Salesman</th>
                                             <th class="align-middle text-center" data-name="reference_number">
                                                 Reference<br>Number</th>
+                                            <th class="align-middle text-center">Product</th>
                                             <th class="align-middle text-center">Progress</th>
                                             <th class="align-middle text-center" data-name="status">Status</th>
                                             <th class="align-middle text-center">WO List</th>
                                             <th class="align-middle text-center">Action</th>
                                         </tr>
                                     </thead>
-    
+
                                 </table>
                             </div>
                         </div>
@@ -170,15 +183,11 @@
                 },
                 pageLength: 5,
                 lengthMenu: [
-                    [5, 10, 20, 25, 50, 100, 200, -1],
-                    [5, 10, 20, 25, 50, 100, 200, "All"]
+                    [5, 10, 20, 25, 50, 100],
+                    [5, 10, 20, 25, 50, 100]
                 ],
-                columnDefs: [{
-                    'orderable': false,
-                    'targets': 0
-                }], // hide sort icon on header of first column
                 aaSorting: [
-                    [2, 'desc']
+                    [1, 'desc']
                 ], // start to sort data in second column 
                 ajax: {
                     url: baseRoute + '/marketing/salesOrder/',
@@ -244,9 +253,15 @@
                         orderable: true,
                     },
                     {
+                        data: 'description',
+                        name: 'description',
+                        orderable: true,
+                        searchable: false
+                    },
+                    {
                         data: 'progress',
                         name: 'progress',
-                        orderable: false,
+                        orderable: true,
                         searchable: false
                     },
                     {
@@ -254,6 +269,7 @@
                         name: 'status',
                         // className: 'align-middle text-center',
                         orderable: true,
+                        searchable: true
                     },
                     {
                         data: 'wo_list',
@@ -270,11 +286,34 @@
                         searchable: false
                     },
                 ],
+                createdRow: function(row, data, dataIndex) {
+                    // Tambahkan class "table-success" ke tr jika statusnya "Posted"
+                    if (data.statusLabel === 'Posted') {
+                        $(row).addClass('table-success');
+                    }
+                },
                 bAutoWidth: false,
                 columnDefs: [{
-                    width: "10%",
-                    targets: [3]
-                }]
+                        width: "10%",
+                        targets: [3]
+                    }, {
+                        width: '100px', // Menetapkan min-width ke 150px
+                        targets: [6, 7], // Menggunakan class 'progress' pada kolom
+                    }, {
+                        width: '120px', // Menetapkan min-width ke 150px
+                        targets: [9], // Menggunakan class 'progress' pada kolom
+                    }, {
+                        width: '150px', // Menetapkan min-width ke 150px
+                        targets: [10], // Menggunakan class 'progress' pada kolom
+                    },
+                    {
+                        width: '60px', // Menetapkan min-width ke 150px
+                        targets: [4], // Menggunakan class 'progress' pada kolom
+                    }, {
+                        orderable: false,
+                        targets: [0]
+                    }
+                ],
             });
         });
     </script>

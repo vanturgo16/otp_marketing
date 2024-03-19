@@ -69,7 +69,9 @@
                                                 id="orderSelect" style="width: 100%">
                                                 <option value="">** Please select a Order Confirmation</option>
                                                 @foreach ($orderPO as $data)
-                                                    <option value="{{ $data->order }}">{{ $data->order }} ( {{ ($data->all_product_details - $data->sales_order_details) }} of {{ ($data->all_product_details) }} )</option>
+                                                    <option value="{{ $data->order }}">{{ $data->order }} (
+                                                        {{ $data->all_product_details - $data->sales_order_details }} of
+                                                        {{ $data->all_product_details }} )</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -125,8 +127,7 @@
                                                 id="customerSelect" style="width: 100%" required>
                                                 <option value="">** Please select a Customers</option>
                                                 @foreach ($customers as $customer)
-                                                    <option value="{{ $customer->id }}">{{ $customer->customer_code }} -
-                                                        {{ $customer->name }}</option>
+                                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -158,7 +159,7 @@
                                             (PO)</label>
                                         <div class="col-sm-9">
                                             <input type="text" class="form-control" name="reference_number"
-                                                id="reference_number" value="">
+                                                id="reference_number" value="-">
                                         </div>
                                     </div>
                                     <div class="row mb-4 field-wrapper">
@@ -202,44 +203,120 @@
                                         <div class="col-sm-9">
                                             <input type="text" class="form-control" name="status" id="statusOrder"
                                                 value="Request" required readonly>
-                                            <input type="text" class="form-control" name="total_price"
-                                                id="total-Price" hidden>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <div class="table-responsive table-bordered">
-                                        <table class="table table-striped table-hover" id="productTable">
-                                            <thead>
-                                                <tr class="text-center">
-                                                    <th>#</th>
-                                                    <th>Type <br>Product</th>
-                                                    <th>Product</th>
-                                                    <th>Cust Product Code</th>
-                                                    <th>Unit</th>
-                                                    <th>Qty</th>
-                                                    <th>Price</th>
-                                                    <th>Subtotal</th>
-                                                    <td class="align-middle text-center">
-                                                        <input type="checkbox" id="checkAllRows">
-                                                    </td>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td class="text-center" colspan="9">There is no data yet, please
-                                                        select Order Confirmation</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                            <div class="card-header pb-0" style="cursor: pointer" id="headerProduct"
+                                onclick="toggle('#bodyProduct')" style="background-color: aliceblue">
+                                <h4><i class="mdi mdi-checkbox-marked-outline"></i> Product</h4>
+                            </div>
+                            <div class="card-body" id="bodyProduct">
+                                <div class="mt-4 mt-lg-0" id="addProduct">
+                                    <div class="row mb-4 field-wrapper required-field">
+                                        <label for="typeProductSelect" class="col-sm-3 col-form-label">Type
+                                            Product</label>
+                                        <div class="col-sm-9">
+                                            <select class="form-control data-select2 typeProductSelect"
+                                                name="type_product" onchange="fetchProducts(this);" style="width: 100%"
+                                                required>
+                                                <option value="">** Please
+                                                    select a Type Product</option>
+                                                <option value="WIP">WIP</option>
+                                                <option value="FG">FG</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4 field-wrapper required-field">
+                                        <label for="productSelect" class="col-sm-3 col-form-label">Product</label>
+                                        <div class="col-sm-9">
+                                            <select class="form-control data-select2 productSelect"
+                                                name="id_master_products" onchange="fethchProductDetail(this);"
+                                                style="width: 100%" required>
+                                                <option value="">** Please
+                                                    select a Product</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4 field-wrapper">
+                                        <label for="cust_product_code" class="col-sm-3 col-form-label">Cust
+                                            Product
+                                            Code</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control custProductCode"
+                                                name="cust_product_code">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4 field-wrapper required-field">
+                                        <label for="qty" class="col-sm-3 col-form-label">Qty</label>
+                                        <div class="col-sm-9">
+                                            <input type="number" class="form-control qty" name="qty"
+                                                onkeyup="calculateTotalPrice(this)" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4 field-wrapper required-field">
+                                        <label for="unit" class="col-sm-3 col-form-label">Unit</label>
+                                        <div class="col-sm-9">
+                                            <select class="form-control data-select2 unitSelect" name="id_master_units"
+                                                style="width: 100%" required>
+                                                <option value="" selected>**
+                                                    Please select a Unit</option>
+                                                @foreach ($units as $unit)
+                                                    <option value="{{ $unit->id }}">
+                                                        {{ $unit->unit }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4 field-wrapper required-field">
+                                        <label for="price" class="col-sm-3 col-form-label">Price</label>
+                                        <div class="col-sm-9 ">
+                                            <input type="number" class="form-control price" name="price"
+                                                onkeyup="calculateTotalPrice(this)" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4 field-wrapper required-field">
+                                        <label for="total_price" class="col-sm-3 col-form-label">Total Price</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control total_price" name="total_price" required
+                                                readonly>
+                                        </div>
                                     </div>
                                 </div>
-                                <!-- end col -->
+
+                                <div class="row d-none" id="product_list">
+                                    <div class="col-lg-12">
+                                        <div class="table-responsive table-bordered">
+                                            <table class="table table-striped table-hover" id="productTable">
+                                                <thead>
+                                                    <tr class="text-center">
+                                                        <th>#</th>
+                                                        <th>Type <br>Product</th>
+                                                        <th>Product</th>
+                                                        <th>Cust Product Code</th>
+                                                        <th>Unit</th>
+                                                        <th>Qty</th>
+                                                        <th>Price</th>
+                                                        <th>Subtotal</th>
+                                                        <td class="align-middle text-center"></td>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="row_products">
+                                                    <tr>
+                                                        <td class="text-center" colspan="9">There is no data yet,
+                                                            please
+                                                            select Order Confirmation</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <!-- end col -->
+                                </div>
+                                <!-- end row -->
                             </div>
-                            <!-- end row -->
 
                             <div class="card-header pb-0" style="cursor: pointer" id="headerPayment"
                                 onclick="toggle('#bodyPayment')">
@@ -247,6 +324,17 @@
                             </div>
                             <div class="card-body" id="bodyPayment">
                                 <div class="mt-4 mt-lg-0">
+                                    <div class="row mb-4 field-wrapper required-field">
+                                        <label for="ppnSelect" class="col-sm-3 col-form-label">Ppn</label>
+                                        <div class="col-sm-9">
+                                            <select class="form-control data-select2" name="ppn" id="ppnSelect"
+                                                style="width: 100%" required>
+                                                <option value="">** Please select a Ppn</option>
+                                                <option value="Include">Inclue</option>
+                                                <option value="Exclude">Exclude</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                     <div class="row mb-4 field-wrapper required-field">
                                         <label for="termPaymentSelect" class="col-sm-3 col-form-label">Term
                                             Payment</label>
@@ -259,17 +347,6 @@
                                                         {{ $termPayment->term_payment }}
                                                     </option>
                                                 @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="row mb-4 field-wrapper required-field">
-                                        <label for="ppnSelect" class="col-sm-3 col-form-label">Ppn</label>
-                                        <div class="col-sm-9">
-                                            <select class="form-control data-select2" name="ppn" id="ppnSelect"
-                                                style="width: 100%" required>
-                                                <option value="">** Please select a Ppn</option>
-                                                <option value="Include">Inclue</option>
-                                                <option value="Exclude">Exclude</option>
                                             </select>
                                         </div>
                                     </div>

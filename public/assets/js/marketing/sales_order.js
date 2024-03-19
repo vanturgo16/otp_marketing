@@ -11,21 +11,35 @@ $(document).ready(function () {
     $('#orderSelect').change(function () {
         let order_number = $(this).val();
 
-        if (order_number != '') {
-            // mengambil data customer, salesman, term payment dan ppn sesuai order_number yang dipilih
-            $.ajax({
-                url: baseRoute + '/marketing/salesOrder/get-order-detail',
-                type: 'GET',
-                dataType: 'json',
-                data: {
-                    order_number: order_number
-                },
-                success: function (response) {
-                    // console.log(response);
+        // mengambil data customer, salesman, term payment dan ppn sesuai order_number yang dipilih
+        $.ajax({
+            url: baseRoute + '/marketing/salesOrder/get-order-detail',
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                order_number: order_number
+            },
+            success: function (response) {
+                // console.log(response);
+                if (response.order != '') {
                     let idMasterCustomer = response.order.id_master_customers;
                     let idMasterSalesman = response.order.id_master_salesmen;
                     let idMasterTermPayment = response.order.id_master_term_payments;
                     let ppn = response.order.ppn;
+                    let masterCustomerAddress = response.order.master_customer_address;
+
+                    // Cek apakah hanya ada satu data di master_customer_address
+                    if (masterCustomerAddress.length === 1) {
+                        // Jika hanya satu data, atur option sebagai selected dan disabled
+                        let optionsCustomerAddress = `<option value="${masterCustomerAddress[0].id}" selected>${masterCustomerAddress[0].address}</option>`;
+                        $('#customerAddressSelect').html(optionsCustomerAddress);
+                        $('#customerAddressSelect').prop('disabled', true);
+                    } else {
+                        // Jika lebih dari satu data, buat options seperti biasa
+                        let optionsCustomerAddress = `<option value="">** Please select a Customer Address</option>${masterCustomerAddress.map(address => `<option value="${address.id}">${address.address}</option>`).join('')}`;
+                        $('#customerAddressSelect').html(optionsCustomerAddress);
+                        $('#customerAddressSelect').prop('disabled', false);
+                    }
 
                     let optionsCustomer = `<option value="">** Please select a Customer</option>${response.customers.map(customer => `<option value="${customer.id}" ${idMasterCustomer == customer.id ? 'selected' : ''}>${customer.name}</option>`).join('')}`;
                     $('#customerSelect').html(optionsCustomer);
@@ -33,8 +47,8 @@ $(document).ready(function () {
                     let isCustomerDisabled = response.customers.some(customer => idMasterCustomer == customer.id);
                     $('#customerSelect').prop('disabled', isCustomerDisabled);
 
-                    let optionsCustomerAddress = `<option value="">** Please select a Customer Address</option>${response.order.master_customer_address.map(address => `<option value="${address.id}">${address.address}</option>`).join('')}`;
-                    $('#customerAddressSelect').html(optionsCustomerAddress);
+                    // let optionsCustomerAddress = `<option value="">** Please select a Customer Address</option>${response.order.master_customer_address.map(address => `<option value="${address.id}">${address.address}</option>`).join('')}`;
+                    // $('#customerAddressSelect').html(optionsCustomerAddress);
 
                     let optionsSalesman = `<option value="">** Please select a Salesman</option>${response.salesmans.map(salesman => `<option value="${salesman.id}" ${idMasterSalesman == salesman.id ? 'selected' : ''}>${salesman.name}</option>`).join('')}`;
                     $('#salesmanSelect').html(optionsSalesman);
@@ -60,25 +74,77 @@ $(document).ready(function () {
                         $ppnSelect.prop('disabled', false);
                     }
 
+                    $('#reference_number').prop('readonly', true);
+                    $('#reference_number').val('-');
+                    $('#product_list').removeClass('d-none');
+                    // Tambahkan kelas d-none jika tidak ada order
+                    $('#addProduct').addClass('d-none');
+
+                    // Menghapus atribut required pada elemen-elemen di dalam #addProduct
+                    $('#addProduct .required-field').find('select, input').prop('required', false);
+                    lastCheckedCheckbox = null;
+
+                    $('.typeProductSelect').html('<select class="form-control data-select2 typeProductSelect"name="type_product" onchange="fetchProducts(this);" style="width: 100%"required><option value="">** Please select a Type Product</option><option value="WIP">WIP</option><option value="FG">FG</option></select>');
+                    $('.productSelect').html('<select class="form-control data-select2 productSelect"name="id_master_products" onchange="fethchProductDetail(this);"style="width: 100%" required><option value="">** Please select a Product</option></select>');
+                    $('.custProductCode').val('');
+                    $('.qty').val('');
+                    getAllUnit()
+                        .then(response => {
+                            // Lakukan sesuatu dengan response
+                            let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit}</option>`).join('')}`;
+                            // unitSelect.html(optionsUnit);
+                            $('.unitSelect').html(optionsUnit);
+                        })
+                        .catch(error => {
+                            // Tangani kesalahan
+                            console.error(error);
+                        });
+                    $('.price').val('');
+                    $('.total_price').val('');
+
                     getDetailOrder(order_number, response);
-                },
-                error: function (xhr, status, error) {
-                    console.error(xhr.responseText);
+                } else {
+                    let optionsCustomer = `<option value="">** Please select a Customer</option>${response.customers.map(customer => `<option value="${customer.id}">${customer.name}</option>`).join('')}`;
+                    $('#customerSelect').html(optionsCustomer);
+                    $('#customerSelect').prop('disabled', false);
+
+                    let optionsCustomerAddress = `<option value="">** Please select a Customers Address</option>`;
+                    $('#customerAddressSelect').html(optionsCustomerAddress);
+                    $('#customerAddressSelect').prop('disabled', false);
+
+                    let optionsSalesman = `<option value="">** Please select a Salesman</option>${response.salesmans.map(salesman => `<option value="${salesman.id}">${salesman.name}</option>`).join('')}`;
+                    $('#salesmanSelect').html(optionsSalesman);
+                    $('#salesmanSelect').prop('disabled', false);
+
+                    let optionsTermPayment = `<option value="">** Please select a Term Payment</option>${response.termPayments.map(termPayment => `<option value="${termPayment.id}">${termPayment.term_payment}</option>`).join('')}`;
+                    $('#termPaymentSelect').html(optionsTermPayment);
+                    $('#termPaymentSelect').prop('disabled', false);
+
+                    let optionsPpn = `<option value="">** Please select a Ppn</option>` +
+                        `<option value="Include">Include</option>` +
+                        `<option value="Exclude">Exclude</option>`;
+                    $('#ppnSelect').html(optionsPpn);
+                    $('#ppnSelect').prop('disabled', false);
+
+                    $('#reference_number').prop('readonly', false);
+                    $('#product_list').addClass('d-none');
+                    // Hapus kelas d-none jika ada order
+                    $('#addProduct').removeClass('d-none');
+
+                    // Tambahkan atribut required pada elemen-elemen di dalam #addProduct
+                    $('#addProduct .required-field').find('select, input').prop('required', true);
+                    lastCheckedCheckbox = null;
+
+                    $('#productTable tbody, #productTable tfoot').empty();
+                    $('#productTable').append('<tr><td class="text-center" colspan="9">There is no data yet, please select Order Confirmation</td></tr>');
+                    $('#total-Price').val('');
+                    $('.total_price').val('');
                 }
-            });
-        } else {
-            let optionsCustomer = `<option value="">** Please select a Customers</option>`;
-            $('#customerSelect').html(optionsCustomer);
-
-            let optionsSalesman = `<option value="">** Please select a Salesman</option>`;
-            $('#salesmanSelect').html(optionsSalesman);
-
-            let optionsTermPayment = `<option value="">** Please select a Term Payment</option>`;
-            $('#termPaymentSelect').html(optionsTermPayment);
-
-            let ppn = `<option value="">** Please select a Ppn</option>`;
-            $('#ppnSelect').val(ppn);
-        }
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+            }
+        });
     })
 
     $('#soTypeSelect').change(function () {
@@ -108,6 +174,88 @@ $(document).ready(function () {
         toggleElementsVisibility();
     });
 
+    // ketika option customer berubah
+    $('#customerSelect').change(function () {
+        let idCustomer = $(this).val();
+
+        // mengambil data address, salesman, term payment dan ppn sesuai idCustomer yang dipilih
+        $.ajax({
+            url: baseRoute + '/marketing/salesOrder/get-customer-detail',
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                idCustomer: idCustomer
+            },
+            success: function (response) {
+                // console.log(response);
+                let masterCustomerAddress = response.customer_addresses;
+                if (response.customer != '') {
+                    let idMasterSalesman = response.customer.id_master_salesmen;
+                    let idMasterTermPayment = response.customer.id_master_term_payments;
+                    let ppn = response.customer.ppn;
+
+                    // Cek apakah hanya ada satu data di master_customer_address
+                    if (masterCustomerAddress.length === 1) {
+                        // Jika hanya satu data, atur option sebagai selected dan disabled
+                        let optionsCustomerAddress = `<option value="${masterCustomerAddress[0].id}" selected>${masterCustomerAddress[0].address}</option>`;
+                        $('#customerAddressSelect').html(optionsCustomerAddress);
+                        $('#customerAddressSelect').prop('disabled', true);
+                    } else {
+                        // Jika lebih dari satu data, buat options seperti biasa
+                        let optionsCustomerAddress = `<option value="">** Please select a Customer Address</option>${masterCustomerAddress.map(address => `<option value="${address.id}">${address.address}</option>`).join('')}`;
+                        $('#customerAddressSelect').html(optionsCustomerAddress);
+                        $('#customerAddressSelect').prop('disabled', false);
+                    }
+
+                    let optionsSalesman = `<option value="">** Please select a Salesman</option>${response.salesmans.map(salesman => `<option value="${salesman.id}" ${idMasterSalesman == salesman.id ? 'selected' : ''}>${salesman.name}</option>`).join('')}`;
+                    $('#salesmanSelect').html(optionsSalesman);
+
+                    let isSalesmanDisabled = response.salesmans.some(salesman => idMasterSalesman == salesman.id);
+                    $('#salesmanSelect').prop('disabled', isSalesmanDisabled);
+
+                    let optionsTermPayment = `<option value="">** Please select a Term Payment</option>${response.termPayments.map(termPayment => `<option value="${termPayment.id}" ${idMasterTermPayment == termPayment.id ? 'selected' : ''}>${termPayment.term_payment}</option>`).join('')}`;
+                    $('#termPaymentSelect').html(optionsTermPayment);
+
+                    let isTermPaymentDisabled = response.termPayments.some(termPayment => idMasterTermPayment == termPayment.id);
+                    $('#termPaymentSelect').prop('disabled', isTermPaymentDisabled);
+
+                    let optionsPpn = `<option value="">** Please select a Ppn</option>` +
+                        `<option value="Include" ${ppn == 'Include' ? 'selected' : ''}>Include</option>` +
+                        `<option value="Exclude" ${ppn == 'Exclude' ? 'selected' : ''}>Exclude</option>`;
+                    $('#ppnSelect').html(optionsPpn);
+
+                    let $ppnSelect = $('#ppnSelect');
+                    if ($ppnSelect != '') {
+                        $ppnSelect.prop('disabled', true);
+                    } else {
+                        $ppnSelect.prop('disabled', false);
+                    }
+                } else {
+                    let optionsCustomerAddress = `<option value="">** Please select a Customer Address</option>${masterCustomerAddress.map(address => `<option value="${address.id}">${address.address}</option>`).join('')}`;
+                    $('#customerAddressSelect').html(optionsCustomerAddress);
+                    $('#customerAddressSelect').prop('disabled', false);
+
+                    let optionsSalesman = `<option value="">** Please select a Salesman</option>${response.salesmans.map(salesman => `<option value="${salesman.id}">${salesman.name}</option>`).join('')}`;
+                    $('#salesmanSelect').html(optionsSalesman);
+                    $('#salesmanSelect').prop('disabled', false);
+
+                    let optionsTermPayment = `<option value="">** Please select a Term Payment</option>${response.termPayments.map(termPayment => `<option value="${termPayment.id}">${termPayment.term_payment}</option>`).join('')}`;
+                    $('#termPaymentSelect').html(optionsTermPayment);
+                    $('#termPaymentSelect').prop('disabled', false);
+
+                    let optionsPpn = `<option value="">** Please select a Ppn</option>` +
+                        `<option value="Include">Include</option>` +
+                        `<option value="Exclude">Exclude</option>`;
+                    $('#ppnSelect').html(optionsPpn);
+                    $('#ppnSelect').prop('disabled', false);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+            }
+        });
+    })
+
     function addDays(date, days) {
         const copy = new Date(Number(date))
         copy.setDate(date.getDate() + days)
@@ -126,11 +274,42 @@ $(document).ready(function () {
     $('#checkAllRows').change(function () {
         $('.rowCheckbox').prop('checked', this.checked);
         toggleHighlight();
-        calculateTotalPrice();
+        calculateTotalPriceTable();
     });
 
+    // $(document).on('change', '.rowCheckbox', function () {
+    //     // $(this).closest('tr').toggleClass('table-success', this.checked);
+    //     if (!this.checked) {
+    //         $('#checkAllRows').prop('checked', false);
+    //     } else {
+    //         // Check if all checkboxes in tbody are checked
+    //         if ($('.rowCheckbox:checked').length === $('.rowCheckbox').length) {
+    //             $('#checkAllRows').prop('checked', true);
+    //         }
+    //     }
+    //     toggleHighlight();
+    //     calculateTotalPriceTable();
+    // });
+
+    let lastCheckedCheckbox = null;
+
     $(document).on('change', '.rowCheckbox', function () {
-        // $(this).closest('tr').toggleClass('table-success', this.checked);
+        if (this.checked) {
+            // Jika checkbox dicentang, periksa apakah sudah ada checkbox yang dicentang sebelumnya
+            if (lastCheckedCheckbox !== null && lastCheckedCheckbox !== this) {
+                // Jika sudah ada checkbox yang dicentang, batalkan centang dan tampilkan pesan
+                alert('Hanya satu baris yang dapat dipilih dalam satu waktu. Harap hapus centang pada baris sebelumnya sebelum memilih yang baru.');
+                $(this).prop('checked', false);
+            } else {
+                // Setel checkbox yang baru dicentang sebagai checkbox terakhir yang dicentang
+                lastCheckedCheckbox = this;
+            }
+        } else {
+            // Jika checkbox dicentang, hapus referensi ke checkbox terakhir yang dicentang
+            lastCheckedCheckbox = null;
+        }
+
+        // Lakukan aksi lain setelah perubahan checkbox
         if (!this.checked) {
             $('#checkAllRows').prop('checked', false);
         } else {
@@ -140,7 +319,7 @@ $(document).ready(function () {
             }
         }
         toggleHighlight();
-        calculateTotalPrice();
+        calculateTotalPriceTable();
     });
 
     // Toggle checkbox when clicking on the row
@@ -149,8 +328,8 @@ $(document).ready(function () {
         if (!$(event.target).is(':checkbox')) {
             const checkbox = $(this).find('.rowCheckbox');
             checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
-            toggleHighlight();
-            calculateTotalPrice();
+            // toggleHighlight();
+            // calculateTotalPriceTable();
         }
     });
 
@@ -160,19 +339,34 @@ $(document).ready(function () {
 
     $(document).on('submit', '#formSalesOrder', function (e) {
         e.preventDefault(); // Mencegah formulir terkirim secara default
+        let so_type = $('#soTypeSelect').val();
+        let order_confirmation = $('#orderSelect').val();
 
         // Cek apakah ada setidaknya satu produk yang dicentang
         var selectedRows = $('.rowCheckbox:checked');
 
-        if (selectedRows.length === 0) {
-            // Jika tidak ada produk yang dicentang, tampilkan pesan kesalahan
-            alert('Pilih setidaknya satu produk untuk melanjutkan.');
-        } else {
-            // Jika ada produk yang dicentang, lanjutkan dengan pengiriman form
-            $("select").removeAttr("disabled");
-            this.submit();
+        console.log(order_confirmation);
+        // Lakukan tindakan berdasarkan kondisi
+        if (order_confirmation !== '' && order_confirmation != '0') {
+            if (selectedRows.length === 0) {
+                // Jika tidak ada produk yang dicentang, tampilkan pesan kesalahan
+                alert('Pilih setidaknya satu produk untuk melanjutkan.');
+                return; // Hentikan eksekusi fungsi
+            }
         }
+
+        // Lanjutkan dengan pengiriman form
+        $("select").removeAttr("disabled");
+        if (so_type == "Stock") {
+            $("#customerSelect, #customerAddressSelect, #salesmanSelect").attr("disabled", true);
+        }
+        this.submit();
     });
+
+    $(document).on('change', '.qty', function () {
+        calculateTotalPrice()
+    });
+
 
     const pathArray = window.location.pathname.split("/");
     const segment_3 = pathArray[3];
@@ -182,6 +376,18 @@ $(document).ready(function () {
         editSalesOrder();
     }
 });
+
+function filterSearch(button) {
+    let search = $(button).attr('data-search');
+    // Ambil DataTable instance
+    var dataTable = $('#so_customer_table').DataTable();
+
+    // Atur nilai pencarian untuk "SO Customer"
+    dataTable.search(search).draw();
+
+    // Perbarui tampilan DataTable
+    dataTable.draw();
+}
 
 // Fungsi untuk menampilkan/sembunyikan elemen berdasarkan nilai so_type
 function toggleElementsVisibility() {
@@ -211,16 +417,17 @@ function toggleHighlight() {
 }
 
 // Calculate total price based on checked rows
-function calculateTotalPrice() {
+function calculateTotalPriceTable() {
     let totalPrice = 0;
     $('.rowCheckbox:checked').each(function () {
         // Menghilangkan titik sebelum mengonversi ke float
-        let subtotalText = $(this).closest('tr').find('.subtotal').text().replace('.', '');
+        let subtotalText = $(this).closest('tr').find('.subtotal').text().replace(/\./g, "");
         totalPrice += parseFloat(subtotalText);
     });
     // $('#totalPrice').text(totalPrice.toFixed(2));
     $('#totalPrice').text(totalPrice.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."));
     $('#total-Price').val(totalPrice);
+    $('.total_price').val(totalPrice);
 }
 
 function getDetailOrder(order_number, response) {
@@ -271,8 +478,137 @@ function getDetailOrder(order_number, response) {
 
         }
 
-        $('#productTable').append('<tfoot><tr><td colspan="7" class="text-end text-black">Total Price</td><td class="text-end" colspan="2"><span id="totalPrice">0</span></td></tr></tfott>');
+        // $('#productTable').append('<tfoot><tr><td colspan="7" class="text-end text-black">Total Price</td><td class="text-end" colspan="2"><span id="totalPrice">0<input type="text" class="form-control" name="total_price" id="total-Price" hidden></span></td></tr></tfoot>');
     }
+}
+
+function fetchProducts(selectElement) {
+    let selectedType = $(selectElement).val();
+    let productSelect = $('.productSelect');
+    let unitSelect = $('.unitSelect');
+    let options = '<option value="">** Please select a Product</option>';
+    // let optionsUnit = '<option value="">** Please select a Unit</option>';
+    // console.log(selectedType);
+
+    // Cara menggunakannya
+    getAllUnit()
+        .then(response => {
+            // Lakukan sesuatu dengan response
+            let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit}</option>`).join('')}`;
+            // unitSelect.html(optionsUnit);
+            unitSelect.html(optionsUnit);
+        })
+        .catch(error => {
+            // Tangani kesalahan
+            console.error(error);
+        });
+
+    // Hanya membuat permintaan AJAX jika tipe dipilih
+    if (selectedType) {
+        $.ajax({
+            url: baseRoute + '/marketing/salesOrder/get-data-product',
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                typeProduct: selectedType
+            },
+            success: function (response) {
+                // Tanggapi dengan mengisi opsi produk sesuai data dari server
+                // console.log(response);
+                $.each(response.products, function (index, product) {
+                    options += '<option value="' + product.id + '">' + product.description + '</option>';
+                });
+                productSelect.html(options);
+
+                // price.val('');
+                calculateTotalPrice(selectElement)
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+            }
+        });
+    } else {
+        productSelect.html(options);
+        getAllUnit()
+            .then(response => {
+                // Lakukan sesuatu dengan response
+                let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit}</option>`).join('')}`;
+                // unitSelect.html(optionsUnit);
+                unitSelect.html(optionsUnit);
+            })
+            .catch(error => {
+                // Tangani kesalahan
+                console.error(error);
+            });
+    }
+    $('.custProductCode').val('');
+    $('.qty').val('');
+    $('.price').val('');
+    $('.total_price').val('');
+}
+
+function fethchProductDetail(selectElement) {
+    let typeProduct = $('.typeProductSelect').val();
+    let selectedProductId = $(selectElement).val();
+
+    if (selectedProductId) {
+        $.ajax({
+            url: baseRoute + '/marketing/salesOrder/get-product-detail',
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                typeProduct: typeProduct,
+                idProduct: selectedProductId
+            },
+            success: function (response) {
+                // console.log(response);
+                let unitSelect = $('.unitSelect');
+                let idUnit = response.product.id_master_units;
+                getAllUnit()
+                    .then(response => {
+                        // Lakukan sesuatu dengan response
+                        let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}"${idUnit == unit.id ? 'selected' : ''}>${unit.unit}</option>`).join('')}`;
+                        unitSelect.html(optionsUnit);
+                    })
+                    .catch(error => {
+                        // Tangani kesalahan
+                        console.error(error);
+                    });
+                $('.price').val(Math.floor(response.product.price)) || 0;
+                $('.custProductCode').focus();
+                calculateTotalPrice(selectElement);
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+            }
+        });
+    }
+    calculateTotalPrice(selectElement);
+}
+
+function calculateTotalPrice(selectElement) {
+    let qty = $('.qty').val() || 0;
+    let price = $('.price').val() || 0;
+
+    let total_price = qty * price;
+    $('.total_price').val(total_price.toFixed(0));
+}
+
+function getAllUnit() {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: baseRoute + '/marketing/salesOrder/get-all-unit',
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                resolve(response);
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+                reject(error);
+            }
+        });
+    });
 }
 
 function editSalesOrder() {

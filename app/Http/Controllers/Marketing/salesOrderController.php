@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Marketing;
 
 use Browser;
 use DataTables;
+use App\Models\MstUnits;
 use App\Models\MstCustomers;
 use App\Models\MstSalesmans;
 use Illuminate\Http\Request;
@@ -41,13 +42,28 @@ class salesOrderController extends Controller
         if (request()->ajax()) {
             $orderColumn = $request->input('order')[0]['column'];
             $orderDirection = $request->input('order')[0]['dir'];
-            $columns = ['', '', 'so_number', 'date', 'customer', 'salesman', 'due_date', 'reference_number', 'status', ''];
+            $columns = ['', 'id', 'id_order_confirmations', 'so_number', 'date', 'so_type', 'customer', 'salesman', 'reference_number', 'description', 'due_date', 'status', '', ''];
 
             // Query dasar
             $query = DB::table('sales_orders as a')
-                ->join('master_customers as b', 'a.id_master_customers', '=', 'b.id')
-                ->join('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
-                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status')
+                ->leftJoin('master_customers as b', 'a.id_master_customers', '=', 'b.id')
+                ->leftJoin('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
+                // ->join('sales_order_details as d', 'a.so_number', '=', 'd.id_sales_orders')
+                ->join(
+                    \DB::raw(
+                        '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product FROM master_wips WHERE status = \'Active\') e'
+                    ),
+                    function ($join) {
+                        // $join->on('d.id_master_products', '=', 'e.id');
+                        // $join->on('d.type_product', '=', 'e.type_product');
+                        $join->on('a.id_master_products', '=', 'e.id');
+                        $join->on('a.type_product', '=', 'e.type_product');
+                    }
+                )
+                // ->join('master_units as f', 'd.id_master_units', '=', 'f.id')
+                ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
+                // ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'd.qty', 'd.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
+                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
                 ->orderBy($columns[$orderColumn], $orderDirection);
 
             // Handle pencarian
@@ -71,21 +87,30 @@ class salesOrderController extends Controller
                     return view('marketing.sales_order.action', compact('data'));
                 })
                 ->addColumn('bulk-action', function ($data) {
-                    $checkBox = $data->status == 'Request' ? '<input type="checkbox" name="checkbox" data-so-number="' . $data->so_number . '" />' : '';
+                    $checkBox = ($data->status == 'Request' || $data->status == 'Un Posted') ? '<input type="checkbox" name="checkbox" data-so-number="' . $data->so_number . '" />' : '';
                     return $checkBox;
                 })
                 ->addColumn('progress', function ($data) {
-                    return '<span style="font-size: smaller;width: 100%"><b>Due Date: </b>' . $data->due_date . '</span>';
+                    $qty = $data->qty . ' ' . $data->unit_code;
+                    $outstanding_qty = $data->outstanding_delivery_qty . ' ' . $data->unit_code;
+                    $delivery_qty = $data->qty . ' ' . $data->unit_code;
+                    return '<span style="font-size: small;width: 100%"><b>Due Date: </b>' . $data->due_date . '<br><b>Qty: </b>' . $qty  . ' ' . '<br><b>Delivered Qty: </b>' . $outstanding_qty . '<br><b>Outstanding Qty: </b>' . $delivery_qty . '<br><b>Deadline: </b>' . $data->due_date . '</span>';
+                })
+                ->addColumn('description', function ($data) {
+                    return $data->product_code . ' - ' . $data->description;
                 })
                 ->addColumn('status', function ($data) {
-                    $badgeColor = $data->status == 'Request' ? 'info' : 'success';
+                    $badgeColor = $data->status == 'Request' ? 'info' : ($data->status == 'Un Posted' ? 'warning' : 'success');
                     return '<span class="badge bg-' . $badgeColor . '" style="font-size: smaller;width: 100%">' . $data->status . '</span>';
                 })
+                ->addColumn('statusLabel', function ($data) {
+                    return $data->status;
+                })
                 ->addColumn('wo_list', function ($data) {
-                    $woList = $data->status == 'Request' ? 'Please Wait So Posted' : 'WO&nbspList';
+                    $woList = $data->status == 'Request' ? 'Please Wait SO Posted' : 'WO&nbspList';
                     return '<button type="button" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">' . $woList . '</button>';
                 })
-                ->rawColumns(['bulk-action', 'progress', 'status', 'wo_list'])
+                ->rawColumns(['bulk-action', 'progress', 'status', 'statusLabel', 'wo_list'])
                 ->make(true);
         }
         return view('marketing.sales_order.index');
@@ -101,10 +126,11 @@ class salesOrderController extends Controller
         $customers = $this->getAllCustomers();
         $salesmans = $this->getAllSalesman();
         $termPayments = $this->getAllTermPayment();
+        $units = $this->getAllUnit();
 
         // dd($orderPO);
 
-        return view('marketing.sales_order.create', compact('orderPO', 'customers', 'salesmans', 'termPayments'));
+        return view('marketing.sales_order.create', compact('orderPO', 'customers', 'salesmans', 'termPayments', 'units'));
     }
 
     /**
@@ -113,6 +139,32 @@ class salesOrderController extends Controller
     public function store(Request $request)
     {
         // dd($request->all());
+
+        if ($request->input('selected_rows')) {
+            // Mendapatkan indeks baris yang terceklis
+            $selectedRows = $request->input('selected_rows', []);
+
+            // Mendapatkan data dari baris yang terceklis
+            foreach ($selectedRows as $index) {
+                $data_product = [
+                    'type_product' => $request->input("type_product.$index"),
+                    'id_master_products' => $request->input("id_master_products.$index"),
+                    'cust_product_code' => $request->input("cust_product_code.$index"),
+                    'qty' => $request->input("qty.$index"),
+                    'id_master_units' => $request->input("id_master_units.$index"),
+                    'price' => $request->input("price.$index"),
+                ];
+            }
+        } else {
+            $data_product = [
+                'type_product' => $request->type_product,
+                'id_master_products' => $request->id_master_products,
+                'cust_product_code' => $request->cust_product_code,
+                'qty' => $request->qty,
+                'id_master_units' => $request->id_master_units,
+                'price' => $request->price,
+            ];
+        }
 
         DB::beginTransaction();
         try {
@@ -124,6 +176,12 @@ class salesOrderController extends Controller
                 // 'transaction_type' => $request->transaction_type,
                 'so_type' => $request->so_type,
                 'so_category' => $request->so_category,
+                'type_product' => $data_product['type_product'],
+                'id_master_products' => $data_product['id_master_products'],
+                'cust_product_code' => $data_product['cust_product_code'],
+                'qty' => $data_product['qty'],
+                'id_master_units' => $data_product['id_master_units'],
+                'price' => $data_product['price'],
                 'total_price' => $request->total_price,
                 'due_date' => $request->due_date,
                 // 'outstanding_delivery_qty' => $request->outstanding_delivery_qty,
@@ -147,26 +205,26 @@ class salesOrderController extends Controller
                 // Sesuaikan dengan kolom-kolom lain yang ada pada tabel order_confirmation
             ]);
 
-            // Mendapatkan indeks baris yang terceklis
-            $selectedRows = $request->input('selected_rows', []);
+            // // Mendapatkan indeks baris yang terceklis
+            // $selectedRows = $request->input('selected_rows', []);
 
-            // Mendapatkan data dari baris yang terceklis
-            foreach ($selectedRows as $index) {
-                // Simpan data ke dalam tabel sales_order_details
-                salesOrderDetail::create([
-                    'id_sales_orders' => $request->so_number,
-                    'type_product' => $request->input("type_product.$index"),
-                    'id_master_products' => $request->input("id_master_products.$index"),
-                    'cust_product_code' => $request->input("cust_product_code.$index"),
-                    'qty' => $request->input("qty.$index"),
-                    'id_master_units' => $request->input("id_master_units.$index"),
-                    'price' => $request->input("price.$index"),
-                    'subtotal' => $request->input("subtotal.$index"),
-                    'due_date' => $request->due_date,
-                    // 'outstanding_delivery_qty' => $request->outstanding_delivery_qty,
-                    // Sesuaikan dengan kolom-kolom lain yang ada pada tabel order_confirmation_detail
-                ]);
-            }
+            // // Mendapatkan data dari baris yang terceklis
+            // foreach ($selectedRows as $index) {
+            //     // Simpan data ke dalam tabel sales_order_details
+            //     salesOrderDetail::create([
+            //         'id_sales_orders' => $request->so_number,
+            //         'type_product' => $request->input("type_product.$index"),
+            //         'id_master_products' => $request->input("id_master_products.$index"),
+            //         'cust_product_code' => $request->input("cust_product_code.$index"),
+            //         'qty' => $request->input("qty.$index"),
+            //         'id_master_units' => $request->input("id_master_units.$index"),
+            //         'price' => $request->input("price.$index"),
+            //         'subtotal' => $request->input("subtotal.$index"),
+            //         'due_date' => $request->due_date,
+            //         // 'outstanding_delivery_qty' => $request->outstanding_delivery_qty,
+            //         // Sesuaikan dengan kolom-kolom lain yang ada pada tabel order_confirmation_detail
+            //     ]);
+            // }
 
             $this->saveLogs('Adding New Sales Order : ' . $request->so_number);
 
@@ -234,21 +292,26 @@ class salesOrderController extends Controller
 
     public function getAllOrder_PO()
     {
-        $combinedDataOrder_PO = DB::table('input_po_customer')
-            ->select('po_number as order')
+        // $combinedDataOrder_PO = DB::table('input_po_customer')
+        //     ->select('po_number as order')
+        //     ->where('status', 'Posted')
+        //     ->unionAll(
+        //         DB::table('order_confirmations')
+        //             ->select('oc_number as order')
+        //             ->where('status', 'Posted')
+        //     )
+        //     ->get();
+        $combinedDataOrder_PO = DB::table('order_confirmations')
+            ->select('oc_number as order')
             ->where('status', 'Posted')
-            ->unionAll(
-                DB::table('order_confirmations')
-                    ->select('oc_number as order')
-                    ->where('status', 'Posted')
-            )
             ->get();
 
         foreach ($combinedDataOrder_PO as $key => $value) {
             // Ambil detail produk dari sales_order_detail
             $salesOrderDetails = DB::table('sales_orders as a')
-                ->join('sales_order_details as b', 'a.so_number', '=', 'b.id_sales_orders')
-                ->select('a.id_order_confirmations', 'a.so_number', 'b.id_sales_orders', 'b.type_product', 'b.id_master_products')
+                // ->join('sales_order_details as b', 'a.so_number', '=', 'b.id_sales_orders')
+                // ->select('a.id_order_confirmations', 'a.so_number', 'b.id_sales_orders', 'b.type_product', 'b.id_master_products')
+                ->select('a.id_order_confirmations', 'a.so_number', 'a.type_product', 'a.id_master_products')
                 ->where('a.id_order_confirmations', $value->order)
                 ->count();
 
@@ -309,13 +372,26 @@ class salesOrderController extends Controller
         return $termPayments;
     }
 
+    public function getAllUnit()
+    {
+        $units = MstUnits::select('id', 'unit')
+            ->where('is_active', 1)
+            ->orderBy('unit', 'asc')
+            ->get();
+
+        return $units;
+    }
+
     public function getOrderDetail()
     {
         $order_number = request()->get('order_number');
-        if (substr($order_number, 0, 2) == 'PO') {
-            $order = InputPOCust::with('inputPOCustomerDetails', 'inputPOCustomerDetails.masterUnit', 'masterCustomerAddress')->where('po_number', $order_number)->first();
-        } else if (substr($order_number, 0, 2) == 'KO') {
-            $order = orderConfirmation::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit', 'masterCustomerAddress')->where('oc_number', $order_number)->first();
+        $order = '';
+        if ($order_number != '') {
+            if (substr($order_number, 0, 2) == 'PO') {
+                $order = InputPOCust::with('inputPOCustomerDetails', 'inputPOCustomerDetails.masterUnit', 'masterCustomerAddress')->where('po_number', $order_number)->first();
+            } else if (substr($order_number, 0, 2) == 'KO') {
+                $order = orderConfirmation::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit', 'masterCustomerAddress')->where('oc_number', $order_number)->first();
+            }
         }
         $customers = $this->getAllCustomers();
         $salesmans = $this->getAllSalesman();
@@ -335,16 +411,31 @@ class salesOrderController extends Controller
         return response()->json(['order' => $order, 'customers' => $customers, 'salesmans' => $salesmans, 'termPayments' => $termPayments, 'products' => $combinedDataProducts, 'compare' => $compareData]);
     }
 
+    public function getCustomerDetail()
+    {
+        $idCustomer = request()->get('idCustomer');
+        $customer = '';
+        if ($idCustomer != '') {
+            $customer = MstCustomers::where('id', $idCustomer)->first();
+        }
+        $salesmans = $this->getAllSalesman();
+        $termPayments = $this->getAllTermPayment();
+        $customer_addresses = MstCustomersAddress::where('id_master_customers', $idCustomer)->get();
+
+        return response()->json(['customer' => $customer, 'salesmans' => $salesmans, 'termPayments' => $termPayments, 'customer_addresses' => $customer_addresses]);
+    }
+
     public function generateSONumber()
     {
         $so_type = request()->get('so_type');
         $prefix = 'SO'; // Prefix yang diinginkan
-        $currentMonthYear = now()->format('ymd'); // Format tahun dan bulan saat ini
-        $suffixLength = 4; // Panjang angka di bagian belakang
+        // $currentMonthYear = now()->format('ymd'); // Format tahun dan bulan saat ini
+        $currentYear = now()->format('y'); // Format tahun saat ini
+        $suffixLength = 6; // Panjang angka di bagian belakang
 
         $suffix = $so_type == 'Reguler' ? 'RG' : ($so_type == 'Sample' ? 'SP' : ($so_type == 'Raw Material' ? 'RM' : ($so_type == 'Machine' ? 'MC' : ($so_type == 'Stock' ? 'ST' : ''))));
 
-        $latestCode = salesOrder::where('so_number', 'like', "{$prefix}{$currentMonthYear}%")
+        $latestCode = salesOrder::where('so_number', 'like', "{$prefix}{$currentYear}%")
             ->whereRaw("right(`so_number`, 2) = '{$suffix}'")
             ->orderBy('so_number', 'desc')
             ->value('so_number');
@@ -353,18 +444,56 @@ class salesOrderController extends Controller
 
         $newNumber = $lastNumber + 1;
 
-        $newCode = $prefix . $currentMonthYear . str_pad($newNumber, $suffixLength, '0', STR_PAD_LEFT) . $suffix;
+        $newCode = $prefix . $currentYear . str_pad($newNumber, $suffixLength, '0', STR_PAD_LEFT) . $suffix;
 
         // Gunakan $newCode sesuai kebutuhan Anda
         return response()->json(['code' => $newCode]);
+    }
+
+    public function getDataProduct()
+    {
+        $typeProduct = request()->get('typeProduct');
+        if ($typeProduct == 'WIP') {
+            $products = DB::table('master_wips as a')
+                ->where('a.status', 'Active')
+                ->select('a.id', 'a.wip_code', 'a.description')
+                ->get();
+        } else if ($typeProduct == 'FG') {
+            $products = DB::table('master_product_fgs as a')
+                ->where('a.status', 'Active')
+                ->select('a.id', 'a.product_code', 'a.description')
+                ->get();
+        }
+        return response()->json(['products' => $products]);
+    }
+
+    public function getProductDetail()
+    {
+        $typeProduct = request()->get('typeProduct');
+        $idProduct = request()->get('idProduct');
+        if ($typeProduct == 'WIP') {
+            $product = DB::table('master_wips as a')
+                ->select('a.id', 'a.description', 'a.id_master_units')
+                // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                ->where('a.id', $idProduct)
+                ->first();
+        } else if ($typeProduct == 'FG') {
+            $product = DB::table('master_product_fgs as a')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price')
+                // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                ->where('a.id', $idProduct)
+                ->first();
+        }
+        return response()->json(['product' => $product]);
     }
 
     public function compareDetails($idOrderConfirmation)
     {
         // Ambil detail produk dari sales_order_detail
         $salesOrderDetails = DB::table('sales_orders as a')
-            ->join('sales_order_details as b', 'a.so_number', '=', 'b.id_sales_orders')
-            ->select('a.id_order_confirmations', 'a.so_number', 'b.id_sales_orders', 'b.type_product', 'b.id_master_products')
+            // ->join('sales_order_details as b', 'a.so_number', '=', 'b.id_sales_orders')
+            // ->select('a.id_order_confirmations', 'a.so_number', 'b.id_sales_orders', 'b.type_product', 'b.id_master_products')
+            ->select('a.id_order_confirmations', 'a.so_number', 'a.type_product', 'a.id_master_products')
             ->where('a.id_order_confirmations', $idOrderConfirmation)
             ->get();
 

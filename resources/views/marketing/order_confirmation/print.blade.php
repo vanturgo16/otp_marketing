@@ -22,9 +22,9 @@
                     Tlp. +62 21 5960801/05, Fax. +62 21 5960776<br />
                 </small>
             </div>
-            <div class="col-4 d-flex justify-content-end">
+            {{-- <div class="col-4 d-flex justify-content-end">
                 FM-SM-MKT-02, Rev. 0, 01 September 2021
-            </div>
+            </div> --}}
         </div>
 
         <div class="row text-center">
@@ -62,9 +62,9 @@
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ $productName }}</td>
                                 <td>{{ $detail->masterUnit->unit }}</td>
-                                <td>{{ $detail->qty }}</td>
-                                <td>{{ $detail->price }}</td>
-                                <td>{{ $detail->subtotal }}</td>
+                                <td class="text-end">{{ $detail->qty }}</td>
+                                <td class="text-end">{{ number_format($detail->price, 0, ',', '.') }}</td>
+                                <td class="text-end">{{ number_format($detail->subtotal, 0, ',', '.') }}</td>
                             </tr>
                         @endforeach
                     </tbody>

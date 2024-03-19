@@ -67,11 +67,11 @@ class orderConfirmationController extends Controller
                     return view('marketing.order_confirmation.action', compact('data'));
                 })
                 ->addColumn('bulk-action', function ($data) {
-                    $checkBox = $data->status == 'Request' ? '<input class="rowCheckbox" type="checkbox" name="checkbox" data-oc-number="' . $data->oc_number . '" />' : '';
+                    $checkBox = ($data->status == 'Request' || $data->status == 'Un Posted') ? '<input class="rowCheckbox" type="checkbox" name="checkbox" data-oc-number="' . $data->oc_number . '" />' : '';
                     return $checkBox;
                 })
                 ->addColumn('status', function ($data) {
-                    $badgeColor = $data->status == 'Request' ? 'info' : 'success';
+                    $badgeColor = $data->status == 'Request' ? 'info' :  ($data->status == 'Un Posted' ? 'warning' : 'success');
                     return '<span class="badge bg-' . $badgeColor . '" style="font-size: smaller;width: 100%">' . $data->status . '</span>';
                 })
                 ->addColumn('statusLabel', function ($data) {

@@ -641,11 +641,11 @@ function showModal(selectElement, actionButton = null) {
     let oc_number = $(selectElement).attr("data-oc-number");
     let status = $(selectElement).attr("data-status");
 
-    let statusTitle = actionButton == 'Delete' ? 'Confirm to Delete' : (status == 'Request' ? 'Confirm to Posted' : 'Confirm to Un Posted');
-    let statusLabel = actionButton == 'Delete' ? 'Are you sure you want to <b class="text-danger">delete</b> this data' : (status == 'Request' ? 'Are you sure you want to <b class="text-success">posted</b> this data?' : 'Are you sure you want to <b class="text-warning">unposted</b> this data?');
-    let mdiIcon = actionButton == 'Delete' ? '<i class="mdi mdi-trash-can label-icon"></i>Delete' : (status == 'Request' ? '<i class="mdi mdi-check-bold label-icon"></i>Posted' : '<i class="mdi mdi-arrow-left-top-bold label-icon"></i>Un Posted');
-    let buttonClass = actionButton == 'Delete' ? 'btn-danger' : (status == 'Request' ? 'btn-success' : 'btn-warning');
-    let attrFunction = actionButton == 'Delete' ? `bulkDeleted('${oc_number}');` : (status == 'Request' ? `bulkPosted('${oc_number}');` : `bulkUnPosted('${oc_number}');`);
+    let statusTitle = actionButton == 'Delete' ? 'Confirm to Delete' : ((status == 'Request' || status == 'Un Posted') ? 'Confirm to Posted' : 'Confirm to Un Posted');
+    let statusLabel = actionButton == 'Delete' ? 'Are you sure you want to <b class="text-danger">delete</b> this data' : ((status == 'Request' || status == 'Un Posted') ? 'Are you sure you want to <b class="text-success">posted</b> this data?' : 'Are you sure you want to <b class="text-warning">unposted</b> this data?');
+    let mdiIcon = actionButton == 'Delete' ? '<i class="mdi mdi-trash-can label-icon"></i>Delete' : ((status == 'Request' || status == 'Un Posted') ? '<i class="mdi mdi-check-bold label-icon"></i>Posted' : '<i class="mdi mdi-arrow-left-top-bold label-icon"></i>Un Posted');
+    let buttonClass = actionButton == 'Delete' ? 'btn-danger' : ((status == 'Request' || status == 'Un Posted') ? 'btn-success' : 'btn-warning');
+    let attrFunction = actionButton == 'Delete' ? `bulkDeleted('${oc_number}');` : ((status == 'Request' || status == 'Un Posted') ? `bulkPosted('${oc_number}');` : `bulkUnPosted('${oc_number}');`);
 
     $('#staticBackdropLabel').text(statusTitle);
     $("#staticBackdrop .modal-body").html(statusLabel);
