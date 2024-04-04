@@ -77,6 +77,7 @@ class salesOrderController extends Controller
                         ->orWhere('b.name', 'like', '%' . $searchValue . '%')
                         ->orWhere('c.name', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.reference_number', 'like', '%' . $searchValue . '%')
+                        ->orWhere('e.description', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.due_date', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.status', 'like', '%' . $searchValue . '%');
                 });
@@ -87,7 +88,7 @@ class salesOrderController extends Controller
                     return view('marketing.sales_order.action', compact('data'));
                 })
                 ->addColumn('bulk-action', function ($data) {
-                    $checkBox = ($data->status == 'Request' || $data->status == 'Un Posted') ? '<input type="checkbox" name="checkbox" data-so-number="' . $data->so_number . '" />' : '';
+                    $checkBox = ($data->status == 'Request' || $data->status == 'Un Posted') ? '<input class="rowCheckboxIndex" type="checkbox" name="checkbox" data-so-number="' . $data->so_number . '" />' : '';
                     return $checkBox;
                 })
                 ->addColumn('progress', function ($data) {
@@ -107,7 +108,7 @@ class salesOrderController extends Controller
                     return $data->status;
                 })
                 ->addColumn('wo_list', function ($data) {
-                    $woList = $data->status == 'Request' ? 'Please Wait SO Posted' : 'WO&nbspList';
+                    $woList = $data->status == 'Request' || $data->status == 'Un Posted' ? 'Please Wait SO Posted' : 'WO&nbspList';
                     return '<button type="button" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">' . $woList . '</button>';
                 })
                 ->rawColumns(['bulk-action', 'progress', 'status', 'statusLabel', 'wo_list'])
@@ -244,9 +245,34 @@ class salesOrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(salesOrder $salesOrder)
+    public function show(salesOrder $salesOrder, $encryptedSONumber)
     {
-        //
+        // Dekripsi data
+        $so_number = Crypt::decrypt($encryptedSONumber);
+        $sales_order = salesOrder::with('masterSalesman', 'masterCustomer', 'masterTermPAyment', 'masterUnit')
+            ->where('so_number', $so_number)
+            ->first();
+        $customer_addresses = MstCustomersAddress::where('id_master_customers', $sales_order->id_master_customers)->where('id', $sales_order->id_master_customer_addresses)->first();
+
+        $typeProduct = $sales_order->type_product;
+        $idProduct = $sales_order->id_master_products;
+        if ($typeProduct == 'WIP') {
+            $product = DB::table('master_wips as a')
+                ->select('a.id', 'a.description', 'a.id_master_units')
+                // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                ->where('a.id', $idProduct)
+                ->first();
+        } else if ($typeProduct == 'FG') {
+            $product = DB::table('master_product_fgs as a')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price')
+                // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                ->where('a.id', $idProduct)
+                ->first();
+        }
+
+        // echo json_encode($sales_order);
+        // exit;
+        return view('marketing.sales_order.show', compact('sales_order', 'customer_addresses', 'product'));
     }
 
     /**
@@ -261,6 +287,7 @@ class salesOrderController extends Controller
         $customers = $this->getAllCustomers();
         $salesmans = $this->getAllSalesman();
         $termPayments = $this->getAllTermPayment();
+        $units = $this->getAllUnit();
 
         $salesOrder = salesOrder::with('salesOrderDetails')
             ->where('so_number', $SONumber)
@@ -269,9 +296,9 @@ class salesOrderController extends Controller
         $customer_addresses = MstCustomersAddress::where('id_master_customers', $salesOrder->id_master_customers)->get();
 
         // dd($customerAddresses);
-        // echo json_encode($salesOrder);exit;
+        // echo json_encode($orderPO);exit;
 
-        return view('marketing.sales_order.edit', compact('customers', 'customer_addresses', 'salesmans', 'termPayments', 'salesOrder'));
+        return view('marketing.sales_order.edit', compact('orderPO', 'customers', 'customer_addresses', 'salesmans', 'termPayments', 'salesOrder', 'units'));
     }
 
     /**
@@ -279,7 +306,127 @@ class salesOrderController extends Controller
      */
     public function update(Request $request, salesOrder $salesOrder)
     {
-        //
+        // dd(count($request->all()));
+        // dd($request->all());
+
+        if ($request->input('selected_rows')) {
+            // Mendapatkan indeks baris yang terceklis
+            $selectedRows = $request->input('selected_rows', []);
+
+            // Mendapatkan data dari baris yang terceklis
+            foreach ($selectedRows as $index) {
+                $data_product = [
+                    'type_product' => $request->input("type_product.$index"),
+                    'id_master_products' => $request->input("id_master_products.$index"),
+                    'cust_product_code' => $request->input("cust_product_code.$index"),
+                    'qty' => $request->input("qty.$index"),
+                    'id_master_units' => $request->input("id_master_units.$index"),
+                    'price' => $request->input("price.$index"),
+                ];
+            }
+        } else if ($request->input('id_order_confirmation') == '') {
+            $data_product = [
+                'type_product' => $request->type_product,
+                'id_master_products' => $request->id_master_products,
+                'cust_product_code' => $request->cust_product_code,
+                'qty' => $request->qty,
+                'id_master_units' => $request->id_master_units,
+                'price' => $request->price,
+            ];
+        }
+
+        DB::beginTransaction();
+        try {
+            // Simpan data ke dalam tabel sales_orders
+            $sales_order = salesOrder::where('so_number', $request->so_number)->first();
+            // echo json_encode($sales_order);exit;
+            if ($request->input('selected_rows') || $request->input('id_order_confirmation') == '') {
+                $sales_order->update([
+                    'id_order_confirmations' => $request->id_order_confirmations,
+                    // 'so_number' => $request->so_number,
+                    'date' => $request->date,
+                    // 'transaction_type' => $request->transaction_type,
+                    // 'so_type' => $request->so_type,
+                    'so_category' => $request->so_category,
+                    'type_product' => $data_product['type_product'],
+                    'id_master_products' => $data_product['id_master_products'],
+                    'cust_product_code' => $data_product['cust_product_code'],
+                    'qty' => $data_product['qty'],
+                    'id_master_units' => $data_product['id_master_units'],
+                    'price' => $data_product['price'],
+                    'total_price' => $request->total_price,
+                    'due_date' => $request->due_date,
+                    // 'outstanding_delivery_qty' => $request->outstanding_delivery_qty,
+                    'id_master_customers' => $request->id_master_customers,
+                    'id_master_customer_addresses' => $request->id_master_customer_addresses,
+                    'id_master_salesmen' => $request->id_master_salesmen,
+                    'reference_number' => $request->reference_number,
+                    'ppn' => $request->ppn,
+                    'color' => $request->color,
+                    'non_invoiceable' => $request->non_invoiceable,
+                    // 'perforasi' => $request->perforasi,
+                    'status' => $request->status,
+                    'id_master_term_payments' => $request->id_master_term_payments,
+                    // 'id_master_currencies' => $request->id_master_currencies,
+                    'remarks' => $request->remark,
+                    // 'approval_by' => $request->approval_by,
+                    // 'unit_rate' => $request->unit_rate,
+                    // 'entry_currency' => $request->entry_currency,
+                    // 'exchange_rate' => $request->exchange_rate,
+                    // 'posting_currency' => $request->posting_currency,
+                    // Sesuaikan dengan kolom-kolom lain yang ada pada tabel order_confirmation
+                ]);
+            } else {
+                $sales_order->update([
+                    'id_order_confirmations' => $request->id_order_confirmations,
+                    // 'so_number' => $request->so_number,
+                    'date' => $request->date,
+                    // 'transaction_type' => $request->transaction_type,
+                    // 'so_type' => $request->so_type,
+                    'so_category' => $request->so_category,
+                    'type_product' => $sales_order->type_product,
+                    'id_master_products' => $sales_order->id_master_products,
+                    'cust_product_code' => $sales_order->cust_product_code,
+                    'qty' => $sales_order->qty,
+                    'id_master_units' => $sales_order->id_master_units,
+                    'price' => $sales_order->price,
+                    'total_price' => $request->total_price,
+                    'due_date' => $request->due_date,
+                    // 'outstanding_delivery_qty' => $request->outstanding_delivery_qty,
+                    'id_master_customers' => $request->id_master_customers,
+                    'id_master_customer_addresses' => $request->id_master_customer_addresses,
+                    'id_master_salesmen' => $request->id_master_salesmen,
+                    'reference_number' => $request->reference_number,
+                    'ppn' => $request->ppn,
+                    'color' => $request->color,
+                    'non_invoiceable' => $request->non_invoiceable,
+                    // 'perforasi' => $request->perforasi,
+                    'status' => $request->status,
+                    'id_master_term_payments' => $request->id_master_term_payments,
+                    // 'id_master_currencies' => $request->id_master_currencies,
+                    'remarks' => $request->remark,
+                    // 'approval_by' => $request->approval_by,
+                    // 'unit_rate' => $request->unit_rate,
+                    // 'entry_currency' => $request->entry_currency,
+                    // 'exchange_rate' => $request->exchange_rate,
+                    // 'posting_currency' => $request->posting_currency,
+                    // Sesuaikan dengan kolom-kolom lain yang ada pada tabel order_confirmation
+                ]);
+            }
+
+            $this->saveLogs('Edit Sales Order : ' . $request->so_number);
+
+            DB::commit();
+
+            if ($request->has('save_add_more')) {
+                return redirect()->back()->with(['success' => 'Success Update Sales Order ' . $request->so_number]);
+            } else {
+                return redirect()->route('marketing.salesOrder.index')->with(['success' => 'Success Update Sales Order ' . $request->so_number]);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with(['fail' => $e . 'Failed to Update Sales Order! ' . $request->so_number]);
+        }
     }
 
     /**
@@ -503,15 +650,36 @@ class salesOrderController extends Controller
     public function getDataSalesOrder()
     {
         $so_number = request()->get('so_number');
-        $sales_order = salesOrder::with('salesOrderDetails', 'salesOrderDetails.masterUnit')
+        $sales_order = salesOrder::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit')
             ->where('so_number', $so_number)
             ->first();
 
-        $order_number = request()->get('order_number');
-        if (substr($order_number, 0, 2) == 'PO') {
-            $order = InputPOCust::with('inputPOCustomerDetails', 'inputPOCustomerDetails.masterUnit', 'masterCustomerAddress')->where('po_number', $order_number)->first();
-        } else if (substr($order_number, 0, 2) == 'KO') {
-            $order = orderConfirmation::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit', 'masterCustomerAddress')->where('oc_number', $order_number)->first();
+        $customer_addresses = '';
+        $detail_product = '';
+        $order_number = $sales_order->id_order_confirmations;
+        if ($order_number != null || $order_number != '') {
+            if (substr($order_number, 0, 2) == 'PO') {
+                $customer_addresses = InputPOCust::with('inputPOCustomerDetails', 'inputPOCustomerDetails.masterUnit', 'masterCustomerAddress')->where('po_number', $order_number)->first();
+            } else if (substr($order_number, 0, 2) == 'KO') {
+                $customer_addresses = orderConfirmation::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit', 'masterCustomerAddress')->where('oc_number', $order_number)->first();
+            }
+        } else {
+            $customer_addresses = salesOrder::with('masterCustomerAddress')->where('so_number', $so_number)->first();
+            $typeProduct = $sales_order->type_product;
+            $idProduct = $sales_order->id_master_products;
+            if ($typeProduct == 'WIP') {
+                $detail_product = DB::table('master_wips as a')
+                    ->select('a.id', 'a.description', 'a.id_master_units')
+                    // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                    ->where('a.id', $idProduct)
+                    ->first();
+            } else if ($typeProduct == 'FG') {
+                $detail_product = DB::table('master_product_fgs as a')
+                    ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price')
+                    // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                    ->where('a.id', $idProduct)
+                    ->first();
+            }
         }
 
         $combinedDataProducts = DB::table('master_product_fgs')
@@ -526,6 +694,94 @@ class salesOrderController extends Controller
 
         $compareData = $this->compareDetails($sales_order->id_order_confirmations);
 
-        return response()->json(['order' => $sales_order, 'products' => $combinedDataProducts, 'compare' => $compareData]);
+        return response()->json(['order' => $sales_order, 'products' => $combinedDataProducts, 'compare' => $compareData, 'customer_addresses' => $customer_addresses, 'detail_product' => $detail_product]);
+    }
+
+    public function bulkPosted(Request $request)
+    {
+        $so_numbers = $request->input('so_numbers');
+
+        DB::beginTransaction();
+        try {
+            // Lakukan logika untuk melakukan bulk update status di sini
+
+            // Contoh: Update status menjadi 'Posted'
+            salesOrder::whereIn('so_number', $so_numbers)
+                ->update(['status' => 'Posted', 'updated_at' => now()]);
+
+            DB::commit();
+            $this->saveLogs('Changed Sales Order ' . implode(', ', $so_numbers) . ' to posted');
+
+            return response()->json(['message' => 'Change to posted successful', 'type' => 'success'], 200);
+        } catch (\Exception $e) {
+            // Tangani kesalahan jika diperlukan
+            return response()->json(['error' => 'Error updating to posted', 'type' => 'error'], 500);
+        }
+    }
+
+    public function bulkUnPosted(Request $request)
+    {
+        $so_numbers = $request->input('so_numbers');
+
+        DB::beginTransaction();
+        try {
+            // Lakukan logika untuk melakukan bulk update status di sini
+
+            // Contoh: Update status menjadi 'Posted'
+            salesOrder::whereIn('so_number', $so_numbers)
+                ->update(['status' => 'Un Posted', 'updated_at' => now()]);
+
+            $this->saveLogs('Changed Sales Order ' . implode(', ', $so_numbers) . ' to unposted');
+
+            DB::commit();
+            return response()->json(['message' => 'Change to unposted successful', 'type' => 'success'], 200);
+        } catch (\Exception $e) {
+            // Tangani kesalahan jika diperlukan
+            return response()->json(['error' => 'Error updating to unposted', 'type' => 'error'], 500);
+        }
+    }
+
+    public function bulkDeleted(Request $request)
+    {
+        $so_numbers = $request->input('so_numbers');
+
+        try {
+            // Hapus data POCustomer sesuai so_number
+            salesOrder::whereIn('so_number', $so_numbers)->delete();
+
+            $this->saveLogs('Deleted Sales Order ' . implode(', ', $so_numbers));
+
+            return response()->json(['message' => 'Successfully deleted data', 'type' => 'success'], 200);
+        } catch (\Exception $e) {
+            // Tangani kesalahan jika diperlukan
+            return response()->json(['error' => 'Failed to delete data', 'type' => 'error'], 500);
+        }
+    }
+
+    public function print($encryptedSONumber)
+    {
+        $so_number = Crypt::decrypt($encryptedSONumber);
+        $salesOrder = salesOrder::with('masterSalesman', 'masterCustomer')
+            ->where('so_number', $so_number)
+            ->first();
+
+        $typeProduct = $salesOrder->type_product;
+        $idProduct = $salesOrder->id_master_products;
+        if ($typeProduct == 'WIP') {
+            $product = DB::table('master_wips as a')
+                ->select('a.id', 'a.description', 'a.id_master_units')
+                // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                ->where('a.id', $idProduct)
+                ->first();
+        } else if ($typeProduct == 'FG') {
+            $product = DB::table('master_product_fgs as a')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price')
+                // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                ->where('a.id', $idProduct)
+                ->first();
+        }
+        // echo json_encode($product);
+        // exit;
+        return view('marketing.sales_order.print', compact('salesOrder', 'product'));
     }
 }

@@ -42,42 +42,79 @@ class InputPOCustController extends Controller
         if (request()->ajax()) {
             $orderColumn = $request->input('order')[0]['column'];
             $orderDirection = $request->input('order')[0]['dir'];
-            $columns = ['', '', 'po_number', 'date', 'customer', 'salesman', 'total_price', 'ppn', 'status', ''];
+            $columns = ['id', 'id_order_confirmations', 'so_number', 'date', 'so_type', 'so_category', 'customer', 'salesman', 'reference_number', 'description', 'price', 'qty', 'total_price', 'status'];
 
             // Query dasar
-            $query = DB::table('input_po_customer as a')
-                ->join('master_customers as b', 'a.id_master_customers', '=', 'b.id')
-                ->join('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
-                ->select('a.id', 'a.po_number', 'a.date', 'b.name as customer', 'c.name as salesman', 'a.total_price', 'a.ppn', 'a.status')
+            $query = DB::table('sales_orders as a')
+                ->leftJoin('master_customers as b', 'a.id_master_customers', '=', 'b.id')
+                ->leftJoin('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
+                // ->join('sales_order_details as d', 'a.so_number', '=', 'd.id_sales_orders')
+                ->join(
+                    \DB::raw(
+                        '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product FROM master_wips WHERE status = \'Active\') e'
+                    ),
+                    function ($join) {
+                        // $join->on('d.id_master_products', '=', 'e.id');
+                        // $join->on('d.type_product', '=', 'e.type_product');
+                        $join->on('a.id_master_products', '=', 'e.id');
+                        $join->on('a.type_product', '=', 'e.type_product');
+                    }
+                )
+                // ->join('master_units as f', 'd.id_master_units', '=', 'f.id')
+                ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
+                // ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'd.qty', 'd.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
+                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'a.so_category', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.price', 'a.total_price', 'a.due_date', 'a.status', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
                 ->orderBy($columns[$orderColumn], $orderDirection);
 
             // Handle pencarian
             if ($request->has('search') && $request->input('search')) {
                 $searchValue = $request->input('search');
                 $query->where(function ($query) use ($searchValue) {
-                    $query->where('a.po_number', 'like', '%' . $searchValue . '%')
+                    $query->where('a.id_order_confirmations', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.so_number', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.date', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.so_type', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.so_category', 'like', '%' . $searchValue . '%')
                         ->orWhere('b.name', 'like', '%' . $searchValue . '%')
                         ->orWhere('c.name', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.reference_number', 'like', '%' . $searchValue . '%')
+                        ->orWhere('e.description', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.price', 'like', '%' . $searchValue . '%')
+                        ->orWhere('a.qty', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.total_price', 'like', '%' . $searchValue . '%')
-                        ->orWhere('a.ppn', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.status', 'like', '%' . $searchValue . '%');
                 });
             }
 
             return DataTables::of($query)
-                ->addColumn('action', function ($data) {
-                    return view('marketing.input_po_customer.action', compact('data'));
-                })
+                // ->addColumn('action', function ($data) {
+                //     return view('marketing.input_po_customer.action', compact('data'));
+                // })
                 ->addColumn('bulk-action', function ($data) {
-                    $checkBox = $data->status == 'Request' ? '<input type="checkbox" name="checkbox" data-po-number="' . $data->po_number . '" />' : '';
+                    $checkBox = ($data->status == 'Request' || $data->status == 'Un Posted') ? '<input type="checkbox" name="checkbox" data-so-number="' . $data->so_number . '" />' : '';
                     return $checkBox;
                 })
+                ->addColumn('progress', function ($data) {
+                    $qty = $data->qty . ' ' . $data->unit_code;
+                    $outstanding_qty = $data->outstanding_delivery_qty . ' ' . $data->unit_code;
+                    $delivery_qty = $data->qty . ' ' . $data->unit_code;
+                    return '<span style="font-size: small;width: 100%"><b>Due Date: </b>' . $data->due_date . '<br><b>Qty: </b>' . $qty  . ' ' . '<br><b>Delivered Qty: </b>' . $outstanding_qty . '<br><b>Outstanding Qty: </b>' . $delivery_qty . '<br><b>Deadline: </b>' . $data->due_date . '</span>';
+                })
+                ->addColumn('description', function ($data) {
+                    return $data->product_code . ' - ' . $data->description;
+                })
                 ->addColumn('status', function ($data) {
-                    $badgeColor = $data->status == 'Request' ? 'info' : 'success';
+                    $badgeColor = $data->status == 'Request' ? 'info' : ($data->status == 'Un Posted' ? 'warning' : 'success');
                     return '<span class="badge bg-' . $badgeColor . '" style="font-size: smaller;width: 100%">' . $data->status . '</span>';
                 })
-                ->rawColumns(['bulk-action', 'status'])
+                ->addColumn('statusLabel', function ($data) {
+                    return $data->status;
+                })
+                ->addColumn('wo_list', function ($data) {
+                    $woList = $data->status == 'Request' ? 'Please Wait SO Posted' : 'WO&nbspList';
+                    return '<button type="button" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">' . $woList . '</button>';
+                })
+                ->rawColumns(['bulk-action', 'progress', 'status', 'statusLabel', 'wo_list'])
                 ->make(true);
         }
         return view('marketing.input_po_customer.index');
