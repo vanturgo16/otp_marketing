@@ -294,19 +294,24 @@ $(document).ready(function () {
     let lastCheckedCheckbox = null;
 
     $(document).on('change', '.rowCheckbox', function () {
+        // if (this.checked) {
+        //     // Jika checkbox dicentang, periksa apakah sudah ada checkbox yang dicentang sebelumnya
+        //     if (lastCheckedCheckbox !== null && lastCheckedCheckbox !== this) {
+        //         // Jika sudah ada checkbox yang dicentang, batalkan centang dan tampilkan pesan
+        //         alert('Hanya satu baris yang dapat dipilih dalam satu waktu. Harap hapus centang pada baris sebelumnya sebelum memilih yang baru.');
+        //         $(this).prop('checked', false);
+        //     } else {
+        //         // Setel checkbox yang baru dicentang sebagai checkbox terakhir yang dicentang
+        //         lastCheckedCheckbox = this;
+        //     }
+        // } else {
+        //     // Jika checkbox dicentang, hapus referensi ke checkbox terakhir yang dicentang
+        //     lastCheckedCheckbox = null;
+        // }
+
         if (this.checked) {
-            // Jika checkbox dicentang, periksa apakah sudah ada checkbox yang dicentang sebelumnya
-            if (lastCheckedCheckbox !== null && lastCheckedCheckbox !== this) {
-                // Jika sudah ada checkbox yang dicentang, batalkan centang dan tampilkan pesan
-                alert('Hanya satu baris yang dapat dipilih dalam satu waktu. Harap hapus centang pada baris sebelumnya sebelum memilih yang baru.');
-                $(this).prop('checked', false);
-            } else {
-                // Setel checkbox yang baru dicentang sebagai checkbox terakhir yang dicentang
-                lastCheckedCheckbox = this;
-            }
-        } else {
-            // Jika checkbox dicentang, hapus referensi ke checkbox terakhir yang dicentang
-            lastCheckedCheckbox = null;
+            // Jika checkbox dipilih, hilangkan ceklis dari checkbox lain
+            $('.rowCheckbox').not(this).prop('checked', false);
         }
 
         // Lakukan aksi lain setelah perubahan checkbox
@@ -345,7 +350,6 @@ $(document).ready(function () {
         // Cek apakah ada setidaknya satu produk yang dicentang
         var selectedRows = $('.rowCheckbox:checked');
 
-        console.log(order_confirmation);
         // Lakukan tindakan berdasarkan kondisi
         if (order_confirmation !== '' && order_confirmation != '0') {
             if (selectedRows.length === 0) {
@@ -363,18 +367,49 @@ $(document).ready(function () {
         this.submit();
     });
 
+    $(document).on('submit', '#formSalesOrderEdit', function (e) {
+        e.preventDefault(); // Mencegah formulir terkirim secara default
+        let so_type = $('#soTypeSelect').val();
+        let order_confirmation = $('#orderSelect').val();
+
+        // Lanjutkan dengan pengiriman form
+        $("select").removeAttr("disabled");
+        if (so_type == "Stock") {
+            $("#customerSelect, #customerAddressSelect, #salesmanSelect").attr("disabled", true);
+        }
+        this.submit();
+    });
+
     $(document).on('change', '.qty', function () {
         calculateTotalPrice()
     });
 
+    $(document).on('change', '.rowCheckboxIndex', function () {
+        // $(this).closest('tr').toggleClass('table-success', this.checked);
+        if (!this.checked) {
+            $('#checkAllRows').prop('checked', false);
+        } else {
+            // Check if all checkboxes in tbody are checked
+            if ($('.rowCheckboxIndex:checked').length === $('.rowCheckboxIndex').length) {
+                $('#checkAllRows').prop('checked', true);
+            }
+        }
+    });
 
     const pathArray = window.location.pathname.split("/");
     const segment_3 = pathArray[3];
     if (segment_3 == 'show') {
-        viewSalesOrder();
+        // viewSalesOrder();
     } else if (segment_3 == 'edit') {
         editSalesOrder();
     }
+});
+
+var isChecked = false;
+
+$('#checkAllRows').click(function () {
+    isChecked = !isChecked;
+    $(':checkbox').prop("checked", isChecked);
 });
 
 function filterSearch(button) {
@@ -387,6 +422,156 @@ function filterSearch(button) {
 
     // Perbarui tampilan DataTable
     dataTable.draw();
+}
+
+function showModal(selectElement, actionButton = null) {
+    let so_number = $(selectElement).attr("data-so-number");
+    let status = $(selectElement).attr("data-status");
+
+    let statusTitle = actionButton == 'Delete' ? 'Confirm to Delete' : ((status == 'Request' || status == 'Un Posted') ? 'Confirm to Posted' : 'Confirm to Un Posted');
+    let statusLabel = actionButton == 'Delete' ? 'Are you sure you want to <b class="text-danger">delete</b> this data' : ((status == 'Request' || status == 'Un Posted') ? 'Are you sure you want to <b class="text-success">posted</b> this data?' : 'Are you sure you want to <b class="text-warning">unposted</b> this data?');
+    let mdiIcon = actionButton == 'Delete' ? '<i class="mdi mdi-trash-can label-icon"></i>Delete' : ((status == 'Request' || status == 'Un Posted') ? '<i class="mdi mdi-check-bold label-icon"></i>Posted' : '<i class="mdi mdi-arrow-left-top-bold label-icon"></i>Un Posted');
+    let buttonClass = actionButton == 'Delete' ? 'btn-danger' : ((status == 'Request' || status == 'Un Posted') ? 'btn-success' : 'btn-warning');
+    let attrFunction = actionButton == 'Delete' ? `bulkDeleted('${so_number}');` : ((status == 'Request' || status == 'Un Posted') ? `bulkPosted('${so_number}');` : `bulkUnPosted('${so_number}');`);
+
+    $('#staticBackdropLabel').text(statusTitle);
+    $("#staticBackdrop .modal-body").html(statusLabel);
+    $("#staticBackdrop button:last")
+        .html(mdiIcon)
+        .removeClass()
+        .addClass(`btn waves-effect btn-label waves-light ${buttonClass}`)
+        .attr('onClick', attrFunction);
+
+    $('#staticBackdrop').modal('show');
+}
+
+// Fungsi untuk melakukan bulk update status
+function showAlert(type, message) {
+    const alertElement = (type === 'success') ? $('#alertSuccess') : $('#alertFail');
+    alertElement.removeClass('d-none');
+    $('.alertMessage').text(message);
+
+    setTimeout(function () {
+        alertElement.addClass('d-none');
+    }, 3000); // Menyembunyikan setelah 3 detik (3000 milidetik)
+}
+
+// Mendapatkan nilai data-oc-number dari baris yang checkbox-nya dicentang
+function getCheckedSONumbers() {
+    var checkedOCNumbers = [];
+
+    $(':checkbox:checked').each(function () {
+        var so_number = $(this).data('so-number');
+        if (so_number !== undefined) {
+            checkedOCNumbers.push(so_number);
+        }
+    });
+
+    return checkedOCNumbers;
+}
+
+function bulkPosted(so_number = null) {
+    let arr_so_number = [so_number];
+    var selectedSONumbers = (so_number != null && so_number != 'undefined') ? arr_so_number : getCheckedSONumbers();
+
+    if ((selectedSONumbers.length > 0) || (so_number != null && so_number != 'undefined')) {
+        $.ajax({
+            url: '/marketing/salesOrder/bulk-posted',
+            type: 'POST',
+            data: {
+                so_numbers: selectedSONumbers,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                // showAlert(response.type, response.message);
+                // Tampilkan pesan alert sesuai dengan jenis pesan
+                if (response.type === 'success') {
+                    showAlert('success', response.message);
+                } else if (response.type === 'error') {
+                    showAlert('error', response.error);
+                }
+                refreshDataTable();
+            },
+            error: function (error) {
+                showAlert('error', 'Error updating status: ' + error.responseJSON.error);
+            }
+        });
+    } else {
+        showAlert('error', 'No items selected for bulk update');
+    }
+
+    $('#staticBackdrop').modal('hide');
+}
+
+function bulkUnPosted(so_number = null) {
+    let arr_so_number = [so_number];
+    var selectedSONumbers = (so_number != null && so_number != 'undefined') ? arr_so_number : getCheckedSONumbers();
+
+    if ((selectedSONumbers.length > 0) || (so_number != null && so_number != 'undefined')) {
+        $.ajax({
+            url: '/marketing/salesOrder/bulk-unposted',
+            type: 'POST',
+            data: {
+                so_numbers: selectedSONumbers,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                // showAlert(response.type, response.message);
+                // Tampilkan pesan alert sesuai dengan jenis pesan
+                if (response.type === 'success') {
+                    showAlert('success', response.message);
+                } else if (response.type === 'error') {
+                    showAlert('error', response.error);
+                }
+                refreshDataTable();
+            },
+            error: function (error) {
+                showAlert('error', 'Error updating status: ' + error.responseJSON.error);
+            }
+        });
+    } else {
+        showAlert('error', 'No items selected for bulk update');
+    }
+
+    $('#staticBackdrop').modal('hide');
+}
+
+function bulkDeleted(so_number = null) {
+    let arr_so_number = [so_number];
+    var selectedSONumbers = (so_number != null && so_number != 'undefined') ? arr_so_number : getCheckedSONumbers();
+
+    if ((selectedSONumbers.length > 0) || (so_number != null && so_number != 'undefined')) {
+        $.ajax({
+            url: '/marketing/salesOrder/bulk-deleted',
+            type: 'POST',
+            data: {
+                so_numbers: selectedSONumbers,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                // showAlert(response.type, response.message);
+                // Tampilkan pesan alert sesuai dengan jenis pesan
+                if (response.type === 'success') {
+                    showAlert('success', response.message);
+                } else if (response.type === 'error') {
+                    showAlert('error', response.error);
+                }
+                refreshDataTable();
+            },
+            error: function (error) {
+                showAlert('error', 'Error delete data: ' + error.responseJSON.error);
+            }
+        });
+    } else {
+        showAlert('error', 'No items selected for bulk delete');
+    }
+
+    $('#staticBackdrop').modal('hide');
+}
+
+function refreshDataTable() {
+    $('#so_customer_table').DataTable().ajax.reload();
+    $('#checkAllRows').prop('checked', false);
 }
 
 // Fungsi untuk menampilkan/sembunyikan elemen berdasarkan nilai so_type
@@ -455,7 +640,8 @@ function getDetailOrder(order_number, response) {
             function displaySearchResult(type, code) {
                 // Mendapatkan hasil pencarian
                 let result = getFilteredProduct(type, code);
-                return result[0]['description'];
+                // return result[0]['description'];
+                return result;
                 // Menampilkan hasil pencarian (misalnya, di konsol)
                 // console.log(result);
                 // Jika ingin menampilkan hasil pada elemen HTML, sesuaikan kode di sini
@@ -470,11 +656,24 @@ function getDetailOrder(order_number, response) {
                 compareProduct.id_master_products === details[i].id_master_product && compareProduct.type_product === details[i].type_product
             );
 
+            // let hiddenCheckbox = '';
+            // if (description[0]['type_product'] == response.order.type_product && description[0]['id_master_products'] && response.order.id_master_products) {
+            //     hiddenCheckbox = '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '" checked>';
+            // }
             // Add a condition to show or hide the checkbox
-            let checkboxHtml = isInCompare ? '' : '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '">';
+            let checkboxHtml = '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '">';
+            if (isInCompare) {
+                if (description[0]['type_product'] == response.order.type_product && description[0]['id'] == response.order.id_master_products) {
+                    checkboxHtml = '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '" checked>';
+                } else {
+                    checkboxHtml = '';
+                }
+            }
+
+            // let checkboxHtml = isInCompare ? '' : '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '">';
             let tableColor = isInCompare ? 'table-danger' : '';
 
-            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
+            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
 
         }
 
@@ -613,6 +812,29 @@ function getAllUnit() {
 
 function editSalesOrder() {
     so_number = $('#so_number').val();
+    order_confirmation = $('#orderSelect').val();
+
+    if (order_confirmation != '') {
+        $('#reference_number').prop('readonly', true);
+        $('#customerSelect').prop('disabled', true);
+        $('#product_list').removeClass('d-none');
+        // Tambahkan kelas d-none jika tidak ada order
+        $('#addProduct').addClass('d-none');
+
+        // Menghapus atribut required pada elemen-elemen di dalam #addProduct
+        $('#addProduct .required-field').find('select, input').prop('required', false);
+        lastCheckedCheckbox = null;
+    } else {
+        $('#reference_number').prop('readonly', false);
+        $('#customerSelect').prop('disabled', false);
+        $('#product_list').addClass('d-none');
+        // Hapus kelas d-none jika ada order
+        $('#addProduct').removeClass('d-none');
+
+        // Tambahkan atribut required pada elemen-elemen di dalam #addProduct
+        $('#addProduct .required-field').find('select, input').prop('required', true);
+        lastCheckedCheckbox = null;
+    }
 
     if (so_number) {
         $.ajax({
@@ -623,8 +845,121 @@ function editSalesOrder() {
                 so_number: so_number,
             },
             success: function (response) {
-                console.log(response);
-                getDetailOrder(response.order.id_order_confirmations, response);
+                // console.log(response);
+                let masterCustomerAddress = response.customer_addresses.master_customer_address;
+                let products = response.products
+
+                // Cek apakah hanya ada satu data di master_customer_address
+                if (masterCustomerAddress.length === 1) {
+                    // Jika hanya satu data, atur option sebagai selected dan disabled
+                    let optionsCustomerAddress = `<option value="${masterCustomerAddress[0].id}" selected>${masterCustomerAddress[0].address}</option>`;
+                    $('#customerAddressSelect').html(optionsCustomerAddress);
+                    $('#customerAddressSelect').prop('disabled', true);
+                }
+                // else {
+                //     // Jika lebih dari satu data, buat options seperti biasa
+                //     let optionsCustomerAddress = `<option value="">** Please select a Customer Address</option>${masterCustomerAddress.map(address => `<option value="${address.id}">${address.address}</option>`).join('')}`;
+                //     $('#customerAddressSelect').html(optionsCustomerAddress);
+                //     $('#customerAddressSelect').prop('disabled', false);
+                // }
+
+                if (response.order.id_order_confirmations != null) {
+                    getDetailOrder(response.order.id_order_confirmations, response);
+                } else {
+                    $('.data-select2').select2("destroy");
+                    $('.typeProductSelect').val(response.order.type_product);
+                    // Function untuk menambahkan opsi produk ke elemen select
+                    function appendProductOption(product) {
+                        $('.productSelect').append($('<option>', {
+                            value: product.id,
+                            text: product.description
+                        }));
+                    }
+
+                    // Function untuk memfilter produk berdasarkan tipe
+                    function filterProductsByType(productType) {
+                        // Bersihkan opsi yang ada sebelum menambahkan yang baru
+                        $('.productSelect').empty();
+                        $('.productSelect').append($('<option>', {
+                            text: '** Please select a Product'
+                        }));
+
+                        // Filter dan tambahkan opsi produk sesuai dengan tipe yang dipilih
+                        products.filter(function (product) {
+                            return product.type_product === productType;
+                        }).forEach(function (filteredProduct) {
+                            appendProductOption(filteredProduct);
+                        });
+                    }
+                    // Panggil fungsi pertama kali untuk menampilkan semua produk (jika ada)
+                    filterProductsByType(response.order.type_product);
+
+                    $('.productSelect').val(response.order.id_master_products)
+                    $('.custProductCode').val(response.order.cust_product_code);
+                    $('.qty').val(response.order.qty);
+                    $('.unitSelect').val(response.order.id_master_units);
+                    $('.price').val(response.order.price);
+                    $('.total_price').val(response.order.total_price);
+
+                    // Menginisialisasi Select2 untuk baris baru
+                    $('.data-select2').select2({
+                        width: 'resolve', // need to override the changed default
+                        theme: "classic"
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+            }
+        });
+    }
+}
+
+function viewSalesOrder() {
+    so_number = $('#so_number').text();
+
+    if (so_number) {
+        $.ajax({
+            url: baseRoute + '/marketing/salesOrder/get-data-sales-order',
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                so_number: so_number,
+            },
+            success: function (response) {
+                // console.log(response);
+                // if (response.orderConfirmation != null) {
+                //     let products = response.products
+
+                //     // Mendapatkan detail dari respons AJAX
+                //     let details = response.orderConfirmation.order_confirmation_details;
+
+                //     // Mengisi baris baru sesuai dengan detail
+                //     for (let i = 0; i < details.length; i++) {
+                //         // Fungsi untuk mendapatkan produk sesuai dengan tipe dan kode produk
+                //         function getFilteredProduct(type, code) {
+                //             return products.filter(product => product.type_product === type && product.id === code);
+                //         }
+
+                //         // Fungsi untuk menampilkan hasil pencarian
+                //         function displaySearchResult(type, code) {
+                //             // Mendapatkan hasil pencarian
+                //             let result = getFilteredProduct(type, code);
+                //             return result[0]['description'];
+                //             // Menampilkan hasil pencarian (misalnya, di konsol)
+                //             // console.log(result);
+                //             // Jika ingin menampilkan hasil pada elemen HTML, sesuaikan kode di sini
+                //         }
+
+                //         // Contoh pemanggilan fungsi dengan tipe dan kode produk tertentu
+                //         let description = displaySearchResult(details[i].type_product, details[i].id_master_product);
+                //         const custProductCode = details[i].cust_product_code !== null ? details[i].cust_product_code : '';
+
+                //         $('#productTable').append('<tr> <td class="text-center">' + (i + 1) + '</td>  <td class="text-center">' + details[i].type_product + '</td> <td>' + description + '</td> <td>' + custProductCode + '</td> <td>' + details[i].master_unit.unit + '</td> <td class="text-center">' + details[i].qty + '</td> <td class="text-end">' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td></tr>');
+                //     }
+
+                //     $('#totalAmount').text(response.orderConfirmation.total_price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."));
+                // }
             },
             error: function (xhr, status, error) {
                 console.error(xhr.responseText);
