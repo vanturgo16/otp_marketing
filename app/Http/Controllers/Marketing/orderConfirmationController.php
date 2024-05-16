@@ -71,7 +71,7 @@ class orderConfirmationController extends Controller
                     return $checkBox;
                 })
                 ->addColumn('status', function ($data) {
-                    $badgeColor = $data->status == 'Request' ? 'info' :  ($data->status == 'Un Posted' ? 'warning' : 'success');
+                    $badgeColor = $data->status == 'Request' ? 'secondary' : ($data->status == 'Un Posted' ? 'warning' : ($data->status == 'Closed' ? 'info' : ($data->status == 'Finish' ? 'primary' : 'success')));
                     return '<span class="badge bg-' . $badgeColor . '" style="font-size: smaller;width: 100%">' . $data->status . '</span>';
                 })
                 ->addColumn('statusLabel', function ($data) {
@@ -373,7 +373,7 @@ class orderConfirmationController extends Controller
 
     public function getAllUnit()
     {
-        $units = MstUnits::select('id', 'unit')
+        $units = MstUnits::select('*')
             ->where('is_active', 1)
             ->orderBy('unit', 'asc')
             ->get();

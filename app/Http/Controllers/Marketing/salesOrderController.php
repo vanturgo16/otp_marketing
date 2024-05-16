@@ -8,16 +8,19 @@ use App\Models\MstUnits;
 use App\Models\MstCustomers;
 use App\Models\MstSalesmans;
 use Illuminate\Http\Request;
+use App\Models\ppic\workOrder;
 use App\Traits\AuditLogsTrait;
 use App\Models\MstTermPayments;
 use Illuminate\Support\Facades\DB;
 use App\Models\MstCustomersAddress;
 use App\Http\Controllers\Controller;
 use App\Models\Marketing\salesOrder;
+use App\Models\ppic\workOrderDetail;
 use App\Models\Marketing\InputPOCust;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\marketing\salesOrderDetail;
 use App\Models\Marketing\orderConfirmation;
+use Illuminate\Database\Eloquent\JsonEncodingException;
 
 class salesOrderController extends Controller
 {
@@ -63,8 +66,16 @@ class salesOrderController extends Controller
                 // ->join('master_units as f', 'd.id_master_units', '=', 'f.id')
                 ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
                 // ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'd.qty', 'd.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
-                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
+                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'a.qty', 'a.qty_results', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
                 ->orderBy($columns[$orderColumn], $orderDirection);
+
+            if ($request->has('type')) {
+                if ($request->input('type') <> '') {
+                    $query->where('a.so_type', '=', $request->input('type'));
+                } else {
+                    $query->where('a.so_type', '<>', $request->input('type'));
+                }
+            }
 
             // Handle pencarian
             if ($request->has('search') && $request->input('search')) {
@@ -73,7 +84,7 @@ class salesOrderController extends Controller
                     $query->where('a.id_order_confirmations', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.so_number', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.date', 'like', '%' . $searchValue . '%')
-                        ->orWhere('a.so_type', 'like', '%' . $searchValue . '%')
+                        // ->orWhere('a.so_type', 'like', '%' . $searchValue . '%')
                         ->orWhere('b.name', 'like', '%' . $searchValue . '%')
                         ->orWhere('c.name', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.reference_number', 'like', '%' . $searchValue . '%')
@@ -92,16 +103,19 @@ class salesOrderController extends Controller
                     return $checkBox;
                 })
                 ->addColumn('progress', function ($data) {
+                    $qty_results = $data->qty_results == null ? 0 : $data->qty_results;
+                    $qty_cancel = $data->outstanding_delivery_qty == null ? 0 : $data->outstanding_delivery_qty;
                     $qty = $data->qty . ' ' . $data->unit_code;
-                    $outstanding_qty = $data->outstanding_delivery_qty . ' ' . $data->unit_code;
-                    $delivery_qty = $data->qty . ' ' . $data->unit_code;
-                    return '<span style="font-size: small;width: 100%"><b>Due Date: </b>' . $data->due_date . '<br><b>Qty: </b>' . $qty  . ' ' . '<br><b>Delivered Qty: </b>' . $outstanding_qty . '<br><b>Outstanding Qty: </b>' . $delivery_qty . '<br><b>Deadline: </b>' . $data->due_date . '</span>';
+                    $delivery_qty = $qty_results . ' ' . $data->unit_code;
+                    $outstanding_qty = ($data->qty - ($qty_results + $qty_cancel)) . ' ' . $data->unit_code;
+                    $cancel_qty = ($qty_cancel) . ' ' . $data->unit_code;
+                    return '<span style="font-size: small;width: 100%"><b>Due Date: </b>' . $data->due_date . '<br><span class="text-primary"><b>Qty: </b>' . $qty  . ' ' . '</span><br><span class="text-info"><b>Delivered Qty: </b>' . $delivery_qty . '</span><br><span class="text-dark"><b>Outstanding Qty: </b>' . $outstanding_qty . '</span><br><span class="text-danger"><b>Cancel Qty: </b>' . $cancel_qty . '</span><br><b>Deadline: </b>' . $data->due_date . '</span>';
                 })
                 ->addColumn('description', function ($data) {
                     return $data->product_code . ' - ' . $data->description;
                 })
                 ->addColumn('status', function ($data) {
-                    $badgeColor = $data->status == 'Request' ? 'info' : ($data->status == 'Un Posted' ? 'warning' : 'success');
+                    $badgeColor = $data->status == 'Request' ? 'secondary' : ($data->status == 'Un Posted' ? 'warning' : ($data->status == 'Closed' ? 'info' : ($data->status == 'Finish' ? 'primary' : 'success')));
                     return '<span class="badge bg-' . $badgeColor . '" style="font-size: smaller;width: 100%">' . $data->status . '</span>';
                 })
                 ->addColumn('statusLabel', function ($data) {
@@ -109,7 +123,8 @@ class salesOrderController extends Controller
                 })
                 ->addColumn('wo_list', function ($data) {
                     $woList = $data->status == 'Request' || $data->status == 'Un Posted' ? 'Please Wait SO Posted' : 'WO&nbspList';
-                    return '<button type="button" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">' . $woList . '</button>';
+                    $woHref = $data->status == 'Request' || $data->status == 'Un Posted' ? '#' : route('marketing.salesOrder.generateWO', encrypt($data->so_number));
+                    return '<a href="' . $woHref . '" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">' . $woList . '</a>';
                 })
                 ->rawColumns(['bulk-action', 'progress', 'status', 'statusLabel', 'wo_list'])
                 ->make(true);
@@ -521,7 +536,7 @@ class salesOrderController extends Controller
 
     public function getAllUnit()
     {
-        $units = MstUnits::select('id', 'unit')
+        $units = MstUnits::select('*')
             ->where('is_active', 1)
             ->orderBy('unit', 'asc')
             ->get();
@@ -783,5 +798,219 @@ class salesOrderController extends Controller
         // echo json_encode($product);
         // exit;
         return view('marketing.sales_order.print', compact('salesOrder', 'product'));
+    }
+
+    public function generateWO($encryptedSONumber)
+    {
+        $so_number = Crypt::decrypt($encryptedSONumber);
+        $salesOrder = salesOrder::with('masterSalesman', 'masterCustomer')
+            ->where('so_number', $so_number)
+            ->first();
+
+        $typeProduct = $salesOrder->type_product;
+        $idProduct = $salesOrder->id_master_products;
+        if ($typeProduct == 'WIP') {
+            $product = DB::table('master_wips as a')
+                ->select('a.*', 'b.group_sub_code', 'b.name')
+                ->join('master_group_subs as b', 'a.id_master_group_subs', '=', 'b.id')
+                ->where('a.id', $idProduct)
+                ->first();
+
+            $product_ref = DB::table('master_wip_ref_wips as a')
+                ->select('a.*')
+                ->where('a.id_master_wips', $idProduct)
+                ->first();
+
+            $product_ref_rm = DB::table('master_wip_refs as a')
+                ->select('a.*', 'b.id_master_units')
+                ->join('master_raw_materials as b', 'a.id_master_raw_materials', '=', 'b.id')
+                ->where('a.id_master_wips', $idProduct)
+                ->get();
+
+            $data['type_product_material'] = 'WIP';
+            $data['id_master_products_material'] = $product_ref->id_master_wips_material;
+            // $data['qty_needed'] = $product_ref->id_master_wips_material;
+            $data['id_master_units_needed'] = $product_ref->master_units_id;
+            $data['qty_results'] = $product_ref->qty_results;
+        } else if ($typeProduct == 'FG') {
+            $product = DB::table('master_product_fgs as a')
+                ->select('a.*', 'b.group_sub_code', 'b.name', 'c.id as id_master_process_productions')
+                ->join('master_group_subs as b', 'a.id_master_group_subs', '=', 'b.id')
+                ->join('master_process_productions as c', 'b.group_sub_code', '=', 'c.process_code')
+                ->where('a.id', $idProduct)
+                ->first();
+
+            $product_ref = DB::table('master_product_fg_refs as a')
+                ->select('a.*')
+                ->where('a.id_master_product_fgs', $idProduct)
+                ->first();
+
+            $data['type_product_material'] = $product_ref->type_ref;
+            // $data['qty_needed'] = $product_ref->id_master_wips_material;
+            $data['id_master_units_needed'] = $product_ref->master_units_id;
+            if ($product_ref->type_ref == 'WIP') {
+                $data['id_master_products_material'] = $product_ref->id_master_wips;
+            } else if ($product_ref->type_ref == 'FG') {
+                $data['id_master_products_material'] = $product_ref->id_master_fgs;
+            } else {
+                $data['id_master_products_material'] = null;
+            }
+            $data['qty_results'] = $product_ref->qty_results;
+        }
+
+        $woCheck = DB::table('work_orders as a')
+            ->select('a.*')
+            ->where('a.id_sales_orders', $salesOrder->id)
+            ->get();
+
+        if ($data['qty_results'] <> null) {
+            $qty_needed = $salesOrder->qty / $data['qty_results'];
+        } else {
+            $qty_needed = null;
+        }
+        // echo json_encode($salesOrder->qty / $data['qty_results']);
+        // exit;
+
+        if (count($woCheck) == 0) {
+            $wo_number = $this->generateWONumber($product->group_sub_code);
+
+            DB::beginTransaction();
+            try {
+                $data = [
+                    'id_sales_orders' => $salesOrder->id,
+                    'wo_number' => $wo_number,
+                    'id_master_process_productions' => $product->id_master_process_productions,
+                    // 'id_master_work_centers' => $salesOrder->id,
+                    'type_product' => $salesOrder->type_product,
+                    'id_master_products' => $salesOrder->id_master_products,
+                    'type_product_material' => $data['type_product_material'],
+                    'id_master_products_material' => $data['id_master_products_material'],
+                    'qty' => $salesOrder->qty,
+                    'id_master_units' => $salesOrder->id_master_units,
+                    // 'qty_results' => $salesOrder->id,
+                    'qty_needed' => $qty_needed,
+                    'id_master_units_needed' => $data['id_master_units_needed'],
+                    'start_date' => date('Y-m-d'),
+                    'finish_date' => date('Y-m-d', strtotime('+7 days')),
+                    'status' => 'Request',
+                    // 'note' => $salesOrder->id,
+                    // 'waste' => $salesOrder->id,
+                    // 'from_stock' => $salesOrder->id,
+                ];
+
+                $work_order = workOrder::create($data);
+
+                if (isset($product_ref_rm) && count($product_ref_rm) > 0) {
+                    $id_work_order = workOrder::where('wo_number', $wo_number)->first();
+
+                    // Simpan data
+                    foreach ($product_ref_rm as $product_rm) {
+                        workOrderDetail::create([
+                            'id_work_orders' => $id_work_order->id,
+                            'type_product' => 'RM',
+                            'id_master_products' => $product_rm->id_master_raw_materials,
+                            'qty' => $product_rm->weight,
+                            'id_master_units' => $product_rm->id_master_units,
+                        ]);
+                    }
+                }
+
+                $this->saveLogs('Adding New Work Order : ' . $wo_number);
+
+                DB::commit();
+                // return redirect()->route('marketing.Order.index')->with(['success' => 'Success Create New Sales Order ' . $request->so_number]);
+            } catch (\Exception $e) {
+                DB::rollback();
+                // return redirect()->back()->with(['fail' => $e . 'Failed to Create New Sales Order! ' . $request->so_number]);
+            }
+        } else {
+            $wo_number = $woCheck[0]->wo_number;
+        }
+
+        // echo json_encode($data);
+        // exit;
+        return redirect()->route('ppic.workOrder.viewWO', encrypt($so_number));
+    }
+
+    public function generateWONumber($proccessProduction)
+    {
+        $prefix = 'WO' . $proccessProduction; // Prefix yang diinginkan
+        $suffixLength = 5; // Panjang angka di bagian belakang
+
+        $latestCode = WorkOrder::orderBy(DB::raw("RIGHT(wo_number, 5)"), 'desc')
+            ->value('wo_number');
+
+        $lastNumber = $latestCode ? intval(substr($latestCode, -1 * $suffixLength)) : 0;
+
+        $newNumber = $lastNumber + 1;
+
+        $newCode = $prefix . str_pad($newNumber, $suffixLength, '0', STR_PAD_LEFT);
+
+        // Gunakan $newCode sesuai kebutuhan Anda
+        return $newCode;
+    }
+
+    public function showWO(workOrder $workOrder, $encryptedSONumber)
+    {
+        // Dekripsi data
+        $so_number = Crypt::decrypt($encryptedSONumber);
+        $sales_order = DB::table('sales_orders as a')
+            ->select('a.*')
+            ->where('a.so_number', $so_number)
+            ->first();
+
+        $list_wo = workOrder::with('masterUnit', 'masterUnitNeeded', 'masterProcessProduction', 'masterWorkCenter')
+            ->where('id_sales_orders', function ($query) use ($so_number) {
+                $query->select('id')
+                    ->from('sales_orders')
+                    ->where('so_number', $so_number);
+            })
+            ->join(
+                \DB::raw(
+                    '(SELECT id as id_prod, product_code, description, id_master_units as unit, \'FG\' as t_product FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id as id_prod, wip_code as product_code, description, id_master_units as unit, \'WIP\' as t_product FROM master_wips WHERE status = \'Active\') b'
+                ),
+                function ($join) {
+                    $join->on('work_orders.id_master_products', '=', 'b.id_prod');
+                    $join->on('work_orders.type_product', '=', 'b.t_product');
+                }
+            )
+            ->leftJoin(
+                \DB::raw(
+                    '(SELECT id as id_prod_needed, product_code as pc_needed, description as desc_needed, id_master_units as unit_needed, \'FG\' as t_product_needed FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id as id_prod_needed, wip_code as pc_needed, description as desc_needed, id_master_units as unit_needed, \'WIP\' as t_product_needed FROM master_wips WHERE status = \'Active\') c'
+                ),
+                function ($join) {
+                    $join->on('work_orders.id_master_products_material', '=', 'c.id_prod_needed');
+                    $join->on('work_orders.type_product_material', '=', 'c.t_product_needed');
+                }
+            )
+            ->get();
+
+        // echo json_encode($list_wo);
+        // exit;
+        return view('marketing.work_order.list', compact('so_number', 'sales_order', 'list_wo'));
+    }
+
+    public function cancelQty(Request $request)
+    {
+        $so_number = $request->input('so_number');
+        $qty = $request->input('qty');
+        $cancel_qty = $request->input('cancel_qty');
+
+        DB::beginTransaction();
+        try {
+            // Lakukan logika untuk melakukan cancel qty di sini
+
+            // Contoh: Update status menjadi 'Posted'
+            salesOrder::where('so_number', $so_number)
+                ->update(['outstanding_delivery_qty' => $cancel_qty, 'updated_at' => now()]);
+
+            DB::commit();
+            $this->saveLogs('Cancel Qty in ' . $so_number . '. Qty cancel : ' . $cancel_qty);
+
+            return response()->json(['message' => 'Cancel qty successful', 'type' => 'success'], 200);
+        } catch (\Exception $e) {
+            // Tangani kesalahan jika diperlukan
+            return response()->json(['error' => 'Error cancel qty', 'type' => 'error'], 500);
+        }
     }
 }

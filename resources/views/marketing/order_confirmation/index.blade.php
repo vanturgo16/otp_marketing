@@ -161,10 +161,10 @@
                     search: "",
                     searchPlaceholder: "Search",
                 },
-                pageLength: 5,
+                pageLength: 20,
                 lengthMenu: [
-                    [5, 10, 20, 25, 50, 100],
-                    [5, 10, 20, 25, 50, 100]
+                    [5, 10, 20, 25, 50, 100, 200],
+                    [5, 10, 20, 25, 50, 100, 200]
                 ],
                 columnDefs: [{
                     'orderable': false,
@@ -251,6 +251,10 @@
                     // Tambahkan class "table-success" ke tr jika statusnya "Posted"
                     if (data.statusLabel === 'Posted') {
                         $(row).addClass('table-success');
+                    } else if (data.statusLabel === 'Closed') {
+                        $(row).addClass('table-info');
+                    } else if (data.statusLabel === 'Finish') {
+                        $(row).addClass('table-primary');
                     }
                 },
                 bAutoWidth: false,

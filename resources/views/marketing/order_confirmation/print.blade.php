@@ -61,7 +61,7 @@
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ $productName }}</td>
-                                <td>{{ $detail->masterUnit->unit }}</td>
+                                <td>{{ $detail->masterUnit->unit_code }}</td>
                                 <td class="text-end">{{ $detail->qty }}</td>
                                 <td class="text-end">{{ number_format($detail->price, 0, ',', '.') }}</td>
                                 <td class="text-end">{{ number_format($detail->subtotal, 0, ',', '.') }}</td>

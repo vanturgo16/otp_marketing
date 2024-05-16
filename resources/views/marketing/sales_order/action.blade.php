@@ -36,6 +36,12 @@
                     Data</a>
             </li>
         @endif
+        @if ($data->status == 'Posted')
+            <li>
+                <button class="dropdown-item drpdwn-cnl" onclick="modalCancelQty('{{ $data->so_number }}', '{{ $data->qty }}')"><span class="mdi mdi-archive-cancel"></span> | Cancel
+                    Qty</button>
+            </li>
+        @endif
         <li>
             <a class="dropdown-item drpdwn"
                 href="{{ route('marketing.salesOrder.view', encrypt($data->so_number)) }}"><span

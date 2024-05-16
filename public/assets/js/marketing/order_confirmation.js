@@ -86,7 +86,7 @@ $(document).ready(function () {
             .then(response => {
                 // Lakukan sesuatu dengan response
                 // console.log(response);
-                let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit}</option>`).join('')}`;
+                let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit_code}</option>`).join('')}`;
                 $('.unitSelect').html(optionsUnit);
             })
             .catch(error => {
@@ -145,7 +145,7 @@ $(document).ready(function () {
                         .then(response => {
                             // Lakukan sesuatu dengan response
                             // console.log(response);
-                            let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}"${idUnit == unit.id ? 'selected' : ''}>${unit.unit}</option>`).join('')}`;
+                            let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}"${idUnit == unit.id ? 'selected' : ''}>${unit.unit_code}</option>`).join('')}`;
                             $('.unitSelect').html(optionsUnit);
                         })
                         .catch(error => {
@@ -374,7 +374,7 @@ function fetchProducts(selectElement) {
                 getAllUnit()
                     .then(response => {
                         // Lakukan sesuatu dengan response
-                        let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit}</option>`).join('')}`;
+                        let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit_code}</option>`).join('')}`;
                         // unitSelect.html(optionsUnit);
                         productRow.find('.unitSelect').html(optionsUnit);
                     })
@@ -421,7 +421,7 @@ function fethchProductDetail(selectElement) {
                 getAllUnit()
                     .then(response => {
                         // Lakukan sesuatu dengan response
-                        let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}"${idUnit == unit.id ? 'selected' : ''}>${unit.unit}</option>`).join('')}`;
+                        let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}"${idUnit == unit.id ? 'selected' : ''}>${unit.unit_code}</option>`).join('')}`;
                         unitSelect.html(optionsUnit);
                     })
                     .catch(error => {
@@ -602,7 +602,7 @@ function viewOrderConfirmation() {
                         let description = displaySearchResult(details[i].type_product, details[i].id_master_product);
                         const custProductCode = details[i].cust_product_code !== null ? details[i].cust_product_code : '';
 
-                        $('#productTable').append('<tr> <td class="text-center">' + (i + 1) + '</td>  <td class="text-center">' + details[i].type_product + '</td> <td>' + description + '</td> <td>' + custProductCode + '</td> <td>' + details[i].master_unit.unit + '</td> <td class="text-center">' + details[i].qty + '</td> <td class="text-end">' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td></tr>');
+                        $('#productTable').append('<tr> <td class="text-center">' + (i + 1) + '</td>  <td class="text-center">' + details[i].type_product + '</td> <td>' + description + '</td> <td>' + custProductCode + '</td> <td>' + details[i].master_unit.unit_code + '</td> <td class="text-center">' + details[i].qty + '</td> <td class="text-end">' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td></tr>');
                     }
 
                     $('#totalAmount').text(response.orderConfirmation.total_price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."));
