@@ -4,6 +4,7 @@
         Action <i class="mdi mdi-chevron-down"></i>
     </button>
     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop">
+        @if ($data->status != 'Closed')
         <li>
             <button
                 class="dropdown-item drpdwn-{{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'scs' : 'wrn' }}"
@@ -13,6 +14,7 @@
                 |
                 {{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'Posted' : 'Un Posted' }}</button>
         </li>
+        @endif
         <li>
             {{-- <button class="dropdown-item drpdwn-scn" onclick="modalPDF('{{ encrypt($data->so_number) }}')"><span
                     class="mdi mdi-printer"></span> | Preview or Print</button> --}}
@@ -34,6 +36,12 @@
                     href="{{ route('marketing.salesOrder.edit', encrypt($data->so_number)) }}"><span
                         class="mdi mdi-circle-edit-outline"></span> | Edit
                     Data</a>
+            </li>
+        @endif
+        @if ($data->status == 'Posted')
+            <li>
+                <button class="dropdown-item drpdwn-cnl" onclick="modalCancelQty('{{ $data->so_number }}', '{{ $data->qty }}')"><span class="mdi mdi-archive-cancel"></span> | Cancel
+                    Qty</button>
             </li>
         @endif
         <li>

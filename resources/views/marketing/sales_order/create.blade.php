@@ -264,7 +264,7 @@
                                                     Please select a Unit</option>
                                                 @foreach ($units as $unit)
                                                     <option value="{{ $unit->id }}">
-                                                        {{ $unit->unit }}
+                                                        {{ $unit->unit_code }}
                                                     </option>
                                                 @endforeach
                                             </select>

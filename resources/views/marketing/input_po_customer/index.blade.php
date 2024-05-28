@@ -59,6 +59,32 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card">
+                        <div class="card-header">
+                            <a href="#" class="btn btn-primary waves-effect btn-label waves-light" data-search = ""
+                                id="all_data" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> All Data
+                            </a>
+                            <a href="#" class="btn btn-light waves-effect btn-label waves-light"
+                                data-search = "Reguler" id="so_reguler" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Reguler
+                            </a>
+                            <a href="#" class="btn btn-info waves-effect btn-label waves-light" data-search = "Sample"
+                                id="so_sample" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Sample
+                            </a>
+                            <a href="#" class="btn btn-secondary waves-effect btn-label waves-light"
+                                data-search = "Raw Material" id="so_ram_material" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Raw Material
+                            </a>
+                            <a href="#" class="btn btn-danger waves-effect btn-label waves-light"
+                                data-search = "Machine" id="so_machine" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Machine
+                            </a>
+                            <a href="#" class="btn btn-success waves-effect btn-label waves-light"
+                                data-search = "Stock" id="so_stock" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Stock
+                            </a>
+                        </div>
                         <div class="card-body">
                             <input type="hidden" name="_token" id="csrf-token" value="{{ Session::token() }}" />
 
@@ -145,12 +171,15 @@
         $(document).ready(function() {
             var i = 1;
             let dataTable = $('#so_customer_table').DataTable({
-                dom: '<"top d-flex"<"position-absolute top-0 end-0 d-flex"fl>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>><"clear:both">',
+                dom: '<"top d-flex"<"position-absolute top-0 end-0 d-flex search-type"fl>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>><"clear:both">',
                 initComplete: function(settings, json) {
                     // Setelah DataTable selesai diinisialisasi
                     // Tambahkan elemen kustom ke dalam DOM
                     $('.top').prepend(
                         `<div class='pull-left col-sm-12 col-md-5 pb-2'><div class="btn-group mb-4"></div></div>`
+                    );
+                    $('.search-type').prepend(
+                        `<div id="wo_list_filter" class="dataTables_filter"><label><input type="text" class="form-control form-control-sm" id="type_search" placeholder="Search by type" aria-controls="wo_list" readonly></label></div>`
                     );
                 },
                 processing: true,
@@ -161,10 +190,10 @@
                     search: "",
                     searchPlaceholder: "Search",
                 },
-                pageLength: 5,
+                pageLength: 20,
                 lengthMenu: [
-                    [5, 10, 20, 25, 50, 100],
-                    [5, 10, 20, 25, 50, 100]
+                    [5, 10, 20, 25, 50, 100, 200],
+                    [5, 10, 20, 25, 50, 100, 200]
                 ],
                 aaSorting: [
                     [1, 'desc']
@@ -173,6 +202,7 @@
                     url: baseRoute + '/marketing/inputPOCust/',
                     data: function(d) {
                         d.search = $('input[type="search"]').val(); // Kirim nilai pencarian
+                        d.type = $('#type_search').val();
                     }
                 },
                 columns: [{
@@ -275,6 +305,10 @@
                     // Tambahkan class "table-success" ke tr jika statusnya "Posted"
                     if (data.statusLabel === 'Posted') {
                         $(row).addClass('table-success');
+                    } else if (data.statusLabel === 'Closed') {
+                        $(row).addClass('table-info');
+                    } else if (data.statusLabel === 'Finish') {
+                        $(row).addClass('table-primary');
                     }
                 },
                 bAutoWidth: false,

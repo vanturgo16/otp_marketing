@@ -761,7 +761,20 @@ function refreshDataTable() {
 }
 
 function modalPDF(po_number) {
-    $('.preview').attr('href', baseRoute + '/marketing/inputPOCust/preview/' + po_number,)
-    $('.print').attr('href', baseRoute + '/marketing/inputPOCust/print/' + po_number,)
+    $('.preview').attr('href', baseRoute + '/marketing/inputPOCust/preview/' + po_number, )
+    $('.print').attr('href', baseRoute + '/marketing/inputPOCust/print/' + po_number, )
     $('#modalPDF').modal('show');
+}
+
+function filterSearch(button) {
+    let search = $(button).attr('data-search');
+    // Ambil DataTable instance
+    var dataTable = $('#so_customer_table').DataTable();
+
+    // Atur nilai pencarian untuk "SO Customer"
+    // dataTable.search(search).draw();
+    $('#type_search').val(search);
+
+    // Perbarui tampilan DataTable
+    dataTable.draw();
 }

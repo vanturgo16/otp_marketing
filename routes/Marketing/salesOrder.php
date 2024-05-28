@@ -27,6 +27,17 @@ Route::group(
       Route::post('/bulk-deleted', 'bulkDeleted')->name('marketing.salesOrder.bulkDeleted');
       // Route::get('/preview/{encryptedSONumber}', 'preview')->name('marketing.salesOrder.preview');
       Route::get('/print/{encryptedSONumber}', 'print')->name('marketing.salesOrder.print');
+      Route::get('/generateWO/{encryptedSONumber}', 'generateWO')->name('marketing.salesOrder.generateWO');
+      Route::post('/cancel-qty', 'cancelQty')->name('marketing.salesOrder.cancelQty');
+    });
+  }
+);
+
+Route::group(
+  ['prefix' => 'ppic/workOrder'],
+  function () {
+    Route::controller(salesOrderController::class)->group(function () {
+      Route::get('/show/{encryptedSONumber}', 'showWO')->name('ppic.workOrder.viewWO');
     });
   }
 );

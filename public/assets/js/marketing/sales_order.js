@@ -91,7 +91,7 @@ $(document).ready(function () {
                     getAllUnit()
                         .then(response => {
                             // Lakukan sesuatu dengan response
-                            let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit}</option>`).join('')}`;
+                            let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit_code}</option>`).join('')}`;
                             // unitSelect.html(optionsUnit);
                             $('.unitSelect').html(optionsUnit);
                         })
@@ -418,7 +418,8 @@ function filterSearch(button) {
     var dataTable = $('#so_customer_table').DataTable();
 
     // Atur nilai pencarian untuk "SO Customer"
-    dataTable.search(search).draw();
+    // dataTable.search(search).draw();
+    $('#type_search').val(search);
 
     // Perbarui tampilan DataTable
     dataTable.draw();
@@ -673,7 +674,7 @@ function getDetailOrder(order_number, response) {
             // let checkboxHtml = isInCompare ? '' : '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '">';
             let tableColor = isInCompare ? 'table-danger' : '';
 
-            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
+            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
 
         }
 
@@ -693,7 +694,7 @@ function fetchProducts(selectElement) {
     getAllUnit()
         .then(response => {
             // Lakukan sesuatu dengan response
-            let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit}</option>`).join('')}`;
+            let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit_code}</option>`).join('')}`;
             // unitSelect.html(optionsUnit);
             unitSelect.html(optionsUnit);
         })
@@ -731,7 +732,7 @@ function fetchProducts(selectElement) {
         getAllUnit()
             .then(response => {
                 // Lakukan sesuatu dengan response
-                let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit}</option>`).join('')}`;
+                let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit_code}</option>`).join('')}`;
                 // unitSelect.html(optionsUnit);
                 unitSelect.html(optionsUnit);
             })
@@ -766,7 +767,7 @@ function fethchProductDetail(selectElement) {
                 getAllUnit()
                     .then(response => {
                         // Lakukan sesuatu dengan response
-                        let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}"${idUnit == unit.id ? 'selected' : ''}>${unit.unit}</option>`).join('')}`;
+                        let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}"${idUnit == unit.id ? 'selected' : ''}>${unit.unit_code}</option>`).join('')}`;
                         unitSelect.html(optionsUnit);
                     })
                     .catch(error => {
@@ -955,7 +956,7 @@ function viewSalesOrder() {
                 //         let description = displaySearchResult(details[i].type_product, details[i].id_master_product);
                 //         const custProductCode = details[i].cust_product_code !== null ? details[i].cust_product_code : '';
 
-                //         $('#productTable').append('<tr> <td class="text-center">' + (i + 1) + '</td>  <td class="text-center">' + details[i].type_product + '</td> <td>' + description + '</td> <td>' + custProductCode + '</td> <td>' + details[i].master_unit.unit + '</td> <td class="text-center">' + details[i].qty + '</td> <td class="text-end">' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td></tr>');
+                //         $('#productTable').append('<tr> <td class="text-center">' + (i + 1) + '</td>  <td class="text-center">' + details[i].type_product + '</td> <td>' + description + '</td> <td>' + custProductCode + '</td> <td>' + details[i].master_unit.unit_code + '</td> <td class="text-center">' + details[i].qty + '</td> <td class="text-end">' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td></tr>');
                 //     }
 
                 //     $('#totalAmount').text(response.orderConfirmation.total_price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."));
@@ -966,4 +967,50 @@ function viewSalesOrder() {
             }
         });
     }
+}
+
+function modalCancelQty(so_number, qty) {
+    $('#modalCancelQty').modal('show');
+    $('#so_number').val(so_number);
+    $('#qty').val(qty);
+    $('#cancel_qty').val('');
+    $('#cancel_qty').focus();
+    $('#cancel_qty').attr('max', qty);
+}
+
+$(document).on('change', '#cancel_qty', function () {
+    let so_number = $('#so_number').val();
+    let qty = $('#qty').val();
+    let cancel_qty = $('#cancel_qty').val();
+    let attrFunction = `cancelQty('${so_number}', '${qty}', '${cancel_qty}')`;
+
+    $("#modalCancelQty button:last").attr('onClick', attrFunction);
+});
+
+function cancelQty(so_number, qty, cancel_qty) {
+    $.ajax({
+        url: '/marketing/salesOrder/cancel-qty',
+        type: 'POST',
+        data: {
+            so_number: so_number,
+            qty: qty,
+            cancel_qty: cancel_qty,
+            _token: $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function (response) {
+            // showAlert(response.type, response.message);
+            // Tampilkan pesan alert sesuai dengan jenis pesan
+            if (response.type === 'success') {
+                showAlert('success', response.message);
+            } else if (response.type === 'error') {
+                showAlert('error', response.error);
+            }
+            refreshDataTable();
+        },
+        error: function (error) {
+            showAlert('error', 'Error cancel qty: ' + error.responseJSON.error);
+        }
+    });
+
+    $('#modalCancelQty').modal('hide');
 }

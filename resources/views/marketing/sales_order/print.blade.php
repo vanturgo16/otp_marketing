@@ -60,7 +60,7 @@
                     <tr>
                         <td>Qty Order</td>
                         <td>:</td>
-                        <td>{{ $salesOrder->qty }}</td>
+                        <td>{{ $salesOrder->qty . ' ' . $product->unit_code }}</td>
                     </tr>
                     <tr>
                         <td>Warna</td>
@@ -104,7 +104,7 @@
             </div>
             <div class="col-4 text-center">
                 <p class="mb-5">Mengetahui,</p>
-                <p><b>(BUDI TRIADI)</b></p>
+                <p><b>(.............)</b></p>
             </div>
             <div class="col-4 text-center">
                 <p class="mb-5">Pemesan</p>

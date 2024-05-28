@@ -64,17 +64,29 @@
                                 class="btn btn-primary waves-effect btn-label waves-light">
                                 <i class="mdi mdi-plus-box label-icon"></i> Add New Data
                             </a>
-                            <a href="#" class="btn btn-secondary waves-effect btn-label waves-light" data-search = ""
-                                id="add_data" onclick="filterSearch(this)">
+                            <a href="#" class="btn btn-primary waves-effect btn-label waves-light" data-search = ""
+                                id="all_data" onclick="filterSearch(this)">
                                 <i class="mdi mdi-file-multiple label-icon"></i> All Data
+                            </a>
+                            <a href="#" class="btn btn-light waves-effect btn-label waves-light"
+                                data-search = "Reguler" id="so_reguler" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Reguler
+                            </a>
+                            <a href="#" class="btn btn-info waves-effect btn-label waves-light" data-search = "Sample"
+                                id="so_sample" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Sample
+                            </a>
+                            <a href="#" class="btn btn-secondary waves-effect btn-label waves-light"
+                                data-search = "Raw Material" id="so_ram_material" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Raw Material
+                            </a>
+                            <a href="#" class="btn btn-danger waves-effect btn-label waves-light"
+                                data-search = "Machine" id="so_machine" onclick="filterSearch(this)">
+                                <i class="mdi mdi-file-multiple label-icon"></i> SO Machine
                             </a>
                             <a href="#" class="btn btn-success waves-effect btn-label waves-light"
                                 data-search = "Stock" id="so_stock" onclick="filterSearch(this)">
                                 <i class="mdi mdi-file-multiple label-icon"></i> SO Stock
-                            </a>
-                            <a href="#" class="btn btn-info waves-effect btn-label waves-light"
-                                data-search = "Reguler" id="so_customer" onclick="filterSearch(this)">
-                                <i class="mdi mdi-file-multiple label-icon"></i> SO Customer
                             </a>
                         </div>
                         <div class="card-body">
@@ -136,6 +148,42 @@
         </div>
     </div>
 
+    <!-- Static Backdrop Modal Cancel Qty -->
+    <div class="modal fade" id="modalCancelQty" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        role="dialog" aria-labelledby="modalCancelQtyLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCancelQtyLabel">Confirm to Change Qty</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <label for="qty" class="col-sm-3 col-form-label">Qty</label>
+                        <div class="col-sm-9">
+                            <input type="hidden" class="form-control" name="so_number"
+                                id="so_number" value="" readonly>
+                            <input type="number" class="form-control" name="qty"
+                                id="qty" value="" readonly>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <label for="cancel_qty" class="col-sm-3 col-form-label">Cancel Qty</label>
+                        <div class="col-sm-9">
+                            <input type="number" class="form-control" name="cancel_qty"
+                                id="cancel_qty" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary waves-effect btn-label waves-light"
+                        onclick="cancelQty()"><i class="mdi mdi-arrow-right-top-bold label-icon"></i>Change</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Static Backdrop Modal PDF -->
     <div class="modal fade" id="modalPDF" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
         role="dialog" aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -165,12 +213,15 @@
         $(document).ready(function() {
             var i = 1;
             let dataTable = $('#so_customer_table').DataTable({
-                dom: '<"top d-flex"<"position-absolute top-0 end-0 d-flex"fl>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>><"clear:both">',
+                dom: '<"top d-flex"<"position-absolute top-0 end-0 d-flex search-type"fl>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>><"clear:both">',
                 initComplete: function(settings, json) {
                     // Setelah DataTable selesai diinisialisasi
                     // Tambahkan elemen kustom ke dalam DOM
                     $('.top').prepend(
                         `<div class='pull-left col-sm-12 col-md-5'><div class="btn-group mb-4"><button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-checkbox-multiple-marked-outline"></i> Bulk Actions</button><ul class="dropdown-menu"><li><button class="dropdown-item" data-status="Request" onclick="showModal(this, 'Delete');"><i class="mdi mdi-trash-can"></i> Delete</button></li><li><button class="dropdown-item" data-status="Request" onclick="showModal(this, 'Request');"><i class="mdi mdi-check-bold"></i> Posted</button></li></ul></div></div>`
+                    );
+                    $('.search-type').prepend(
+                        `<div id="wo_list_filter" class="dataTables_filter"><label><input type="text" class="form-control form-control-sm" id="type_search" placeholder="Search by type" aria-controls="wo_list" readonly></label></div>`
                     );
                 },
                 processing: true,
@@ -181,10 +232,10 @@
                     search: "",
                     searchPlaceholder: "Search",
                 },
-                pageLength: 5,
+                pageLength: 20,
                 lengthMenu: [
-                    [5, 10, 20, 25, 50, 100],
-                    [5, 10, 20, 25, 50, 100]
+                    [5, 10, 20, 25, 50, 100, 200],
+                    [5, 10, 20, 25, 50, 100, 200]
                 ],
                 aaSorting: [
                     [1, 'desc']
@@ -193,6 +244,7 @@
                     url: baseRoute + '/marketing/salesOrder/',
                     data: function(d) {
                         d.search = $('input[type="search"]').val(); // Kirim nilai pencarian
+                        d.type = $('#type_search').val();
                     }
                 },
                 columns: [{
@@ -290,6 +342,10 @@
                     // Tambahkan class "table-success" ke tr jika statusnya "Posted"
                     if (data.statusLabel === 'Posted') {
                         $(row).addClass('table-success');
+                    } else if (data.statusLabel === 'Closed') {
+                        $(row).addClass('table-info');
+                    } else if (data.statusLabel === 'Finish') {
+                        $(row).addClass('table-primary');
                     }
                 },
                 bAutoWidth: false,
@@ -300,10 +356,10 @@
                         width: '100px', // Menetapkan min-width ke 150px
                         targets: [6, 7], // Menggunakan class 'progress' pada kolom
                     }, {
-                        width: '120px', // Menetapkan min-width ke 150px
+                        width: '150px', // Menetapkan min-width ke 150px
                         targets: [9], // Menggunakan class 'progress' pada kolom
                     }, {
-                        width: '150px', // Menetapkan min-width ke 150px
+                        width: '250px', // Menetapkan min-width ke 150px
                         targets: [10], // Menggunakan class 'progress' pada kolom
                     },
                     {

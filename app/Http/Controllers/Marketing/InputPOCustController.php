@@ -66,6 +66,14 @@ class InputPOCustController extends Controller
                 ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'a.so_category', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.price', 'a.total_price', 'a.due_date', 'a.status', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
                 ->orderBy($columns[$orderColumn], $orderDirection);
 
+            if ($request->has('type')) {
+                if ($request->input('type') <> '') {
+                    $query->where('a.so_type', '=', $request->input('type'));
+                } else {
+                    $query->where('a.so_type', '<>', $request->input('type'));
+                }
+            }
+
             // Handle pencarian
             if ($request->has('search') && $request->input('search')) {
                 $searchValue = $request->input('search');
@@ -73,7 +81,7 @@ class InputPOCustController extends Controller
                     $query->where('a.id_order_confirmations', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.so_number', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.date', 'like', '%' . $searchValue . '%')
-                        ->orWhere('a.so_type', 'like', '%' . $searchValue . '%')
+                        // ->orWhere('a.so_type', 'like', '%' . $searchValue . '%')
                         ->orWhere('a.so_category', 'like', '%' . $searchValue . '%')
                         ->orWhere('b.name', 'like', '%' . $searchValue . '%')
                         ->orWhere('c.name', 'like', '%' . $searchValue . '%')
@@ -104,7 +112,7 @@ class InputPOCustController extends Controller
                     return $data->product_code . ' - ' . $data->description;
                 })
                 ->addColumn('status', function ($data) {
-                    $badgeColor = $data->status == 'Request' ? 'info' : ($data->status == 'Un Posted' ? 'warning' : 'success');
+                    $badgeColor = $data->status == 'Request' ? 'secondary' : ($data->status == 'Un Posted' ? 'warning' : ($data->status == 'Closed' ? 'info' : ($data->status == 'Finish' ? 'primary' : 'success')));
                     return '<span class="badge bg-' . $badgeColor . '" style="font-size: smaller;width: 100%">' . $data->status . '</span>';
                 })
                 ->addColumn('statusLabel', function ($data) {

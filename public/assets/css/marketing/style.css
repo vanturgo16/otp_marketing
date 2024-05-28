@@ -99,6 +99,10 @@ div dl dt label {
     background-color: rgb(126, 67, 194);
     color: #ffff;
 }
+.drpdwn-cnl:hover {
+    background-color: rgb(194, 67, 67);
+    color: #ffff;
+}
 
 /* BULK ACTION */
 :root {
