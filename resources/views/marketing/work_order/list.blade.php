@@ -106,8 +106,29 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
+                                                @php
+                                                    $statusColors = [
+                                                        'Posted' => 'table-success',
+                                                        'Closed' => 'table-info',
+                                                        'Finish' => 'table-primary',
+                                                        // Tambahkan status lain jika diperlukan
+                                                    ];
+
+                                                    $badgeColors = [
+                                                        'Closed' => 'info',
+                                                        'Finish' => 'primary',
+                                                        'Un Posted' => 'warning',
+                                                        'Posted' => 'success',
+                                                        // Tambahkan status lain jika diperlukan
+                                                    ];
+                                                @endphp
+
                                                 @foreach ($list_wo as $item)
-                                                    <tr>
+                                                    @php
+                                                        $bgColor = $statusColors[$item->status] ?? '';
+                                                        $badgeColor = $badgeColors[$item->status] ?? 'secondary'; // Gunakan 'secondary' sebagai default jika status tidak ditemukan
+                                                    @endphp
+                                                    <tr class="{{ $bgColor }}">
                                                         <td>{{ $loop->iteration }}</td>
                                                         <td>{{ $item->wo_number }}</td>
                                                         <td>{{ $item->product_code . ' - ' . $item->description }}</td>
@@ -122,19 +143,10 @@
                                                         </td>
                                                         <td>{{ $item->note }}</td>
                                                         <td>
-                                                            @php
-                                                                $badgeColor =
-                                                                    $item->status == 'Request'
-                                                                        ? 'info'
-                                                                        : ($item->status == 'Un Posted'
-                                                                            ? 'warning'
-                                                                            : 'success');
-                                                                echo '<span class="badge bg-' .
-                                                                    $badgeColor .
-                                                                    '" style="font-size: smaller;width: 100%">' .
-                                                                    $item->status .
-                                                                    '</span>';
-                                                            @endphp
+                                                            <span class="badge bg-{{ $badgeColor }}"
+                                                                style="font-size: smaller;width: 100%">
+                                                                {{ $item->status }}
+                                                            </span>
                                                         </td>
                                                     </tr>
                                                 @endforeach

@@ -109,7 +109,11 @@ class salesOrderController extends Controller
                     $delivery_qty = $qty_results . ' ' . $data->unit_code;
                     $outstanding_qty = ($data->qty - ($qty_results + $qty_cancel)) . ' ' . $data->unit_code;
                     $cancel_qty = ($qty_cancel) . ' ' . $data->unit_code;
-                    return '<span style="font-size: small;width: 100%"><b>Due Date: </b>' . $data->due_date . '<br><span class="text-primary"><b>Qty: </b>' . $qty  . ' ' . '</span><br><span class="text-info"><b>Delivered Qty: </b>' . $delivery_qty . '</span><br><span class="text-dark"><b>Outstanding Qty: </b>' . $outstanding_qty . '</span><br><span class="text-danger"><b>Cancel Qty: </b>' . $cancel_qty . '</span><br><b>Deadline: </b>' . $data->due_date . '</span>';
+                    if ($data->status <> 'Request') {
+                        return '<span style="font-size: small;width: 100%"><b>Due Date: </b>' . $data->due_date . '<br><span class="text-primary"><b>Qty: </b>' . $qty  . ' ' . '</span><br><span class="text-info"><b>Delivered Qty: </b>' . $delivery_qty . '</span><br><span class="text-dark"><b>Outstanding Qty: </b>' . $outstanding_qty . '</span><br><span class="text-danger"><b>Cancel Qty: </b>' . $cancel_qty . '</span><br><b>Deadline: </b></span>';
+                    } else {
+                        return '<span style="font-size: small;width: 100%"><b>-</b></span>';
+                    }
                 })
                 ->addColumn('description', function ($data) {
                     return $data->product_code . ' - ' . $data->description;
@@ -784,14 +788,14 @@ class salesOrderController extends Controller
         $idProduct = $salesOrder->id_master_products;
         if ($typeProduct == 'WIP') {
             $product = DB::table('master_wips as a')
-                ->select('a.id', 'a.description', 'a.id_master_units')
-                // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'b.unit_code')
+                ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();
         } else if ($typeProduct == 'FG') {
             $product = DB::table('master_product_fgs as a')
-                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price')
-                // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price', 'b.unit_code')
+                ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();
         }
@@ -827,8 +831,10 @@ class salesOrderController extends Controller
                 ->where('a.id_master_wips', $idProduct)
                 ->get();
 
-            $data['type_product_material'] = 'WIP';
-            $data['id_master_products_material'] = $product_ref->id_master_wips_material;
+            // $data['type_product_material'] = 'WIP';
+            $data['type_product_material'] = $product_ref->id_master_wips_material == '0' ? null : 'WIP';
+            // $data['id_master_products_material'] = $product_ref->id_master_wips_material;
+            $data['id_master_products_material'] = $product_ref->id_master_wips_material == '0' ? null : $product_ref->id_master_wips_material;
             // $data['qty_needed'] = $product_ref->id_master_wips_material;
             $data['id_master_units_needed'] = $product_ref->master_units_id;
             $data['qty_results'] = $product_ref->qty_results;
