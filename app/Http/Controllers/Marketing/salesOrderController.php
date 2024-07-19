@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Marketing;
 
 use Browser;
 use DataTables;
+use Carbon\Carbon;
 use App\Models\MstUnits;
 use App\Models\MstCustomers;
 use App\Models\MstSalesmans;
@@ -109,8 +110,23 @@ class salesOrderController extends Controller
                     $delivery_qty = $qty_results . ' ' . $data->unit_code;
                     $outstanding_qty = ($data->qty - ($qty_results + $qty_cancel)) . ' ' . $data->unit_code;
                     $cancel_qty = ($qty_cancel) . ' ' . $data->unit_code;
+
+                    $dueDate = Carbon::parse($data->due_date);
+                    $today = Carbon::today(); // Today's date
+                    if ($today->isBefore($dueDate)) {
+                        $daysDifference = $dueDate->diffInDays($today);
+                        $deadline = "H-{$daysDifference} delayed";
+                    } elseif ($today->isAfter($dueDate)) {
+                        $daysDifference = $today->diffInDays($dueDate);
+                        $deadline = "H+{$daysDifference} delayed";
+                    } else {
+                        $deadline = "Delivery Now";
+                    }
+                    if ($data->status == 'Closed') {
+                        $deadline = "-";
+                    }
                     if ($data->status <> 'Request') {
-                        return '<span style="font-size: small;width: 100%"><b>Due Date: </b>' . $data->due_date . '<br><span class="text-primary"><b>Qty: </b>' . $qty  . ' ' . '</span><br><span class="text-info"><b>Delivered Qty: </b>' . $delivery_qty . '</span><br><span class="text-dark"><b>Outstanding Qty: </b>' . $outstanding_qty . '</span><br><span class="text-danger"><b>Cancel Qty: </b>' . $cancel_qty . '</span><br><b>Deadline: </b></span>';
+                        return '<span style="font-size: small;width: 100%"><b>Due Date: </b>' . $data->due_date . '<br><span class="text-primary"><b>Qty: </b>' . $qty  . ' ' . '</span><br><span class="text-info"><b>Delivered Qty: </b>' . $delivery_qty . '</span><br><span class="text-dark"><b>Outstanding Qty: </b>' . $outstanding_qty . '</span><br><span class="text-danger"><b>Cancel Qty: </b>' . $cancel_qty . '</span><br><b>Deadline: ' . $deadline . '</b></span>';
                     } else {
                         return '<span style="font-size: small;width: 100%"><b>-</b></span>';
                     }
@@ -251,7 +267,7 @@ class salesOrderController extends Controller
             DB::commit();
 
             if ($request->has('save_add_more')) {
-                return redirect()->back()->with(['success' => 'Success Create New Sales Order ' . $request->so_number]);
+                return redirect()->route('marketing.salesOrder.create')->with(['success' => 'Success Create New Sales Order ' . $request->so_number]);
             } else {
                 return redirect()->route('marketing.salesOrder.index')->with(['success' => 'Success Create New Sales Order ' . $request->so_number]);
             }
