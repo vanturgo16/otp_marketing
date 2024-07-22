@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\Marketing\salesOrderController;
-
+use Illuminate\Support\Facades\Route;
 
 Route::group(
   ['prefix' => 'marketing/salesOrder'],
   function () {
-    Route::controller(salesOrderController::class)->group(function () {
+    Route::controller(salesOrderController::class)->middleware('permission:Marketing_salesOrder')->group(function () {
       Route::get('/', 'index')->name('marketing.salesOrder.index');
       Route::get('/create', 'create')->name('marketing.salesOrder.create');
       // Route::get('/get-data', 'getData')->name('marketing.salesOrder.getData');

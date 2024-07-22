@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\Marketing\InputPOCustController;
-
+use Illuminate\Support\Facades\Route;
 
 Route::group(
   ['prefix' => 'marketing/inputPOCust'],
   function () {
-    Route::controller(InputPOCustController::class)->group(function () {
+    Route::controller(InputPOCustController::class)->middleware('permission:Marketing_inputPOCust')->group(function () {
       Route::get('/', 'index')->name('marketing.inputPOCust.index');
       Route::get('/create', 'create')->name('marketing.inputPOCust.create');
       Route::get('/get-data', 'getData')->name('marketing.inputPOCust.getData');
