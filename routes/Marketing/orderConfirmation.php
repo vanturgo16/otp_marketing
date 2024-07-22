@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Marketing\orderConfirmationController;
-
+use Illuminate\Support\Facades\Route;
 // Route::controller(orderConfirmationController::class)->group(function () {
 //   Route::get('marketing/orderConfirmation', 'index')->name('marketing.orderConfirmation.index');
 //   Route::post('marketing/orderConfirmation', 'store')->name('marketing.orderConfirmation.store');
@@ -10,7 +10,7 @@ use App\Http\Controllers\Marketing\orderConfirmationController;
 Route::group(
   ['prefix' => 'marketing/orderConfirmation'],
   function () { 
-    Route::controller(orderConfirmationController::class)->group(function () {
+    Route::controller(orderConfirmationController::class)->middleware('permission:Marketing_orderConfirmation')->group(function () {
       Route::get('/', 'index')->name('marketing.orderConfirmation.index');
       Route::get('/create', 'create')->name('marketing.orderConfirmation.create');
       Route::get('/get-customers', 'getCustomers')->name('marketing.orderConfirmation.getCustomers');

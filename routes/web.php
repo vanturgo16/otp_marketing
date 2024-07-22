@@ -22,7 +22,7 @@ Route::post('auth/login', [AuthController::class, 'postlogin'])->name('postlogin
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
-    Route::group(['middleware' => ['clear.permission.cache']], function () {
+    Route::group(['middleware' => ['clear.permission.cache','permission:Marketing']], function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Marketing
