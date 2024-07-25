@@ -114,11 +114,11 @@ class orderConfirmationController extends Controller
             'id_master_term_payments' => 'required',
             'id_master_currencies' => 'required',
             'ppn' => 'required',
-            'remark' => 'required',
+            // 'remark' => 'required',
             'status' => 'required',
             'type_product' => 'required',
             'id_master_products' => 'required',
-            'cust_product_code' => 'required',
+            // 'cust_product_code' => 'required',
             'qty' => 'required',
             'id_master_units' => 'required',
             'price' => 'required',
@@ -419,12 +419,12 @@ class orderConfirmationController extends Controller
         if ($typeProduct == 'WIP') {
             $products = DB::table('master_wips as a')
                 ->where('a.status', 'Active')
-                ->select('a.id', 'a.wip_code', 'a.description')
+                ->select('a.id', 'a.wip_code', 'a.description', 'a.perforasi')
                 ->get();
         } else if ($typeProduct == 'FG') {
             $products = DB::table('master_product_fgs as a')
                 ->where('a.status', 'Active')
-                ->select('a.id', 'a.product_code', 'a.description')
+                ->select('a.id', 'a.product_code', 'a.description', 'a.perforasi')
                 ->get();
         }
         return response()->json(['products' => $products]);
@@ -465,11 +465,11 @@ class orderConfirmationController extends Controller
             ->first();
 
         $combinedDataProducts = DB::table('master_product_fgs')
-            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"))
+            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"), 'perforasi')
             ->where('status', 'Active')
             ->unionAll(
                 DB::table('master_wips')
-                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"))
+                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"), 'perforasi')
                     ->where('status', 'Active')
             )
             ->get();

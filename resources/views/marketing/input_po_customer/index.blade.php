@@ -290,6 +290,9 @@
                         orderable: true,
                         render: function(data, type, row) {
                             // Format data menjadi rupiah
+                            if (data === null || data === undefined) {
+                                return '-'; // Or any placeholder you prefer for null/undefined values
+                            }
                             return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
                         }
                     },

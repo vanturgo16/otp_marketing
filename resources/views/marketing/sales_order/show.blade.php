@@ -132,9 +132,14 @@
                                                 <tbody>
                                                     <tr>
                                                         <td class="text-center">{{ $sales_order->type_product }}</td>
-                                                        <td>{{ $product->description }}</td>
+                                                        @php
+                                                            $perforasi =
+                                                                $product->perforasi == null ? '-' : $product->perforasi;
+                                                        @endphp
+                                                        <td>{{ $product->description . ' | Perforasi: ' . $perforasi }}</td>
                                                         <td>{{ $sales_order->cust_product_code }}</td>
-                                                        <td class="text-center">{{ $sales_order->masterUnit->unit_code }}</td>
+                                                        <td class="text-center">{{ $sales_order->masterUnit->unit_code }}
+                                                        </td>
                                                         <td class="text-center">{{ $sales_order->qty }}</td>
                                                         <td class="text-end">{{ $sales_order->price }}</td>
                                                         <td class="text-end">{{ $sales_order->total_price }}</td>

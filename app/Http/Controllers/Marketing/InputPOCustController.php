@@ -51,7 +51,7 @@ class InputPOCustController extends Controller
                 // ->join('sales_order_details as d', 'a.so_number', '=', 'd.id_sales_orders')
                 ->join(
                     \DB::raw(
-                        '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product FROM master_wips WHERE status = \'Active\') e'
+                        '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product, perforasi FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product, perforasi FROM master_wips WHERE status = \'Active\') e'
                     ),
                     function ($join) {
                         // $join->on('d.id_master_products', '=', 'e.id');
@@ -63,7 +63,7 @@ class InputPOCustController extends Controller
                 // ->join('master_units as f', 'd.id_master_units', '=', 'f.id')
                 ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
                 // ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'd.qty', 'd.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
-                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'a.so_category', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.price', 'a.total_price', 'a.due_date', 'a.status', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
+                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'a.so_category', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.price', 'a.total_price', 'a.due_date', 'a.status', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi')
                 ->orderBy($columns[$orderColumn], $orderDirection);
 
             if ($request->has('type')) {
@@ -109,7 +109,7 @@ class InputPOCustController extends Controller
                     return '<span style="font-size: small;width: 100%"><b>Due Date: </b>' . $data->due_date . '<br><b>Qty: </b>' . $qty  . ' ' . '<br><b>Delivered Qty: </b>' . $outstanding_qty . '<br><b>Outstanding Qty: </b>' . $delivery_qty . '<br><b>Deadline: </b>' . $data->due_date . '</span>';
                 })
                 ->addColumn('description', function ($data) {
-                    return $data->product_code . ' - ' . $data->description;
+                    return $data->product_code . ' - ' . $data->description . ' | Perforasi: ' . $data->perforasi;
                 })
                 ->addColumn('status', function ($data) {
                     $badgeColor = $data->status == 'Request' ? 'secondary' : ($data->status == 'Un Posted' ? 'warning' : ($data->status == 'Closed' ? 'info' : ($data->status == 'Finish' ? 'primary' : 'success')));
