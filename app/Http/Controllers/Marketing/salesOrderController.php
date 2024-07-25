@@ -55,7 +55,7 @@ class salesOrderController extends Controller
                 // ->join('sales_order_details as d', 'a.so_number', '=', 'd.id_sales_orders')
                 ->join(
                     \DB::raw(
-                        '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product FROM master_wips WHERE status = \'Active\') e'
+                        '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product, perforasi FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product, perforasi FROM master_wips WHERE status = \'Active\') e'
                     ),
                     function ($join) {
                         // $join->on('d.id_master_products', '=', 'e.id');
@@ -67,7 +67,7 @@ class salesOrderController extends Controller
                 // ->join('master_units as f', 'd.id_master_units', '=', 'f.id')
                 ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
                 // ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'd.qty', 'd.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
-                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'a.qty', 'a.qty_results', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
+                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'a.qty', 'a.qty_results', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi')
                 ->orderBy($columns[$orderColumn], $orderDirection);
 
             if ($request->has('type')) {
@@ -132,7 +132,7 @@ class salesOrderController extends Controller
                     }
                 })
                 ->addColumn('description', function ($data) {
-                    return $data->product_code . ' - ' . $data->description;
+                    return $data->product_code . ' - ' . $data->description . ' | Perforasi: ' . $data->perforasi;
                 })
                 ->addColumn('status', function ($data) {
                     $badgeColor = $data->status == 'Request' ? 'secondary' : ($data->status == 'Un Posted' ? 'warning' : ($data->status == 'Closed' ? 'info' : ($data->status == 'Finish' ? 'primary' : 'success')));
@@ -293,13 +293,13 @@ class salesOrderController extends Controller
         $idProduct = $sales_order->id_master_products;
         if ($typeProduct == 'WIP') {
             $product = DB::table('master_wips as a')
-                ->select('a.id', 'a.description', 'a.id_master_units')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'a.perforasi')
                 // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();
         } else if ($typeProduct == 'FG') {
             $product = DB::table('master_product_fgs as a')
-                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price', 'a.perforasi')
                 // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();
@@ -318,20 +318,21 @@ class salesOrderController extends Controller
         // Dekripsi data
         $SONumber = Crypt::decrypt($encryptedSONumber);
 
-        $orderPO = $this->getAllOrder_PO();
+        $salesOrder = salesOrder::with('salesOrderDetails')
+            ->where('so_number', $SONumber)
+            ->first();
+
+        $orderPO = $this->getAllOrder_PO($salesOrder->id_order_confirmations);
         $customers = $this->getAllCustomers();
         $salesmans = $this->getAllSalesman();
         $termPayments = $this->getAllTermPayment();
         $units = $this->getAllUnit();
 
-        $salesOrder = salesOrder::with('salesOrderDetails')
-            ->where('so_number', $SONumber)
-            ->first();
-
         $customer_addresses = MstCustomersAddress::where('id_master_customers', $salesOrder->id_master_customers)->get();
 
         // dd($customerAddresses);
-        // echo json_encode($orderPO);exit;
+        // echo json_encode($salesOrder->id_order_confirmations);
+        // exit;
 
         return view('marketing.sales_order.edit', compact('orderPO', 'customers', 'customer_addresses', 'salesmans', 'termPayments', 'salesOrder', 'units'));
     }
@@ -472,7 +473,7 @@ class salesOrderController extends Controller
         //
     }
 
-    public function getAllOrder_PO()
+    public function getAllOrder_PO($oc_number = null)
     {
         // $combinedDataOrder_PO = DB::table('input_po_customer')
         //     ->select('po_number as order')
@@ -517,6 +518,30 @@ class salesOrderController extends Controller
                 unset($combinedDataOrder_PO[$key]);
             }
         }
+
+        // Reset index array setelah unset, jika $combinedDataOrder_PO adalah array
+        if (is_array($combinedDataOrder_PO)) {
+            $combinedDataOrder_PO = array_values($combinedDataOrder_PO);
+        }
+
+        // Cek apakah $SONumber ada dalam $combinedDataOrder_PO
+        $isSONumberInList = false;
+        foreach ($combinedDataOrder_PO as $order) {
+            if ($order->order == $oc_number) {
+                $isSONumberInList = true;
+                break;
+            }
+        }
+
+        // Jika $SONumber tidak ada dalam $combinedDataOrder_PO, tambahkan
+        if (!$isSONumberInList && $oc_number !== null) {
+            $newOrder = new \stdClass();
+            $newOrder->order = $oc_number;
+            $newOrder->sales_order_details = 0;
+            $newOrder->all_product_details = 0; // Atur sesuai kebutuhan Anda
+            $combinedDataOrder_PO[] = $newOrder;
+        }
+
         // Reset index array setelah unset
         // $combinedDataOrder_PO = array_values($combinedDataOrder_PO);
 
@@ -579,11 +604,11 @@ class salesOrderController extends Controller
         $salesmans = $this->getAllSalesman();
         $termPayments = $this->getAllTermPayment();
         $combinedDataProducts = DB::table('master_product_fgs')
-            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"))
+            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"), 'perforasi')
             ->where('status', 'Active')
             ->unionAll(
                 DB::table('master_wips')
-                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"))
+                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"), 'perforasi')
                     ->where('status', 'Active')
             )
             ->get();
@@ -638,12 +663,12 @@ class salesOrderController extends Controller
         if ($typeProduct == 'WIP') {
             $products = DB::table('master_wips as a')
                 ->where('a.status', 'Active')
-                ->select('a.id', 'a.wip_code', 'a.description')
+                ->select('a.id', 'a.wip_code', 'a.description', 'a.perforasi')
                 ->get();
         } else if ($typeProduct == 'FG') {
             $products = DB::table('master_product_fgs as a')
                 ->where('a.status', 'Active')
-                ->select('a.id', 'a.product_code', 'a.description')
+                ->select('a.id', 'a.product_code', 'a.description', 'a.perforasi')
                 ->get();
         }
         return response()->json(['products' => $products]);
@@ -704,13 +729,13 @@ class salesOrderController extends Controller
             $idProduct = $sales_order->id_master_products;
             if ($typeProduct == 'WIP') {
                 $detail_product = DB::table('master_wips as a')
-                    ->select('a.id', 'a.description', 'a.id_master_units')
+                    ->select('a.id', 'a.description', 'a.id_master_units', 'a.perforasi')
                     // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                     ->where('a.id', $idProduct)
                     ->first();
             } else if ($typeProduct == 'FG') {
                 $detail_product = DB::table('master_product_fgs as a')
-                    ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price')
+                    ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price', 'a.perforasi')
                     // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                     ->where('a.id', $idProduct)
                     ->first();
@@ -718,11 +743,11 @@ class salesOrderController extends Controller
         }
 
         $combinedDataProducts = DB::table('master_product_fgs')
-            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"))
+            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"), 'perforasi')
             ->where('status', 'Active')
             ->unionAll(
                 DB::table('master_wips')
-                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"))
+                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"), 'perforasi')
                     ->where('status', 'Active')
             )
             ->get();

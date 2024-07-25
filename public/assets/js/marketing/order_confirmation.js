@@ -366,7 +366,8 @@ function fetchProducts(selectElement) {
 
 
                 $.each(response.products, function (index, product) {
-                    options += '<option value="' + product.id + '">' + product.description + '</option>';
+                    $perforasi = product.perforasi == null ? '-' : product.perforasi;
+                    options += '<option value="' + product.id + '">' + product.description + ' | Perforasi: ' + $perforasi + '</option>';
                 });
                 productSelect.html(options);
 
@@ -508,12 +509,13 @@ function editOrderConfirmation() {
                         // console.log(details[i].id_master_product);
                         // Mengisi nilai dari detail ke dalam baris yang di-klon
                         $clonedRow.find('.typeProductSelect').val(details[i].type_product);
-
+                        
                         // Function untuk menambahkan opsi produk ke elemen select
                         function appendProductOption(product) {
+                            $perforasi = product.perforasi == null ? '-' : product.perforasi;
                             $clonedRow.find('.productSelect').append($('<option>', {
                                 value: product.id,
-                                text: product.description
+                                text: product.description + ' | Perforasi: ' + $perforasi
                             }));
                         }
 
@@ -592,7 +594,8 @@ function viewOrderConfirmation() {
                         function displaySearchResult(type, code) {
                             // Mendapatkan hasil pencarian
                             let result = getFilteredProduct(type, code);
-                            return result[0]['description'];
+                            $perforasi = result[0]['perforasi'] != null ? result[0]['perforasi'] : '-';
+                            return result[0]['description'] + ' | Perforasi: ' + $perforasi;
                             // Menampilkan hasil pencarian (misalnya, di konsol)
                             // console.log(result);
                             // Jika ingin menampilkan hasil pada elemen HTML, sesuaikan kode di sini

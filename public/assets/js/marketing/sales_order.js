@@ -372,6 +372,18 @@ $(document).ready(function () {
         let so_type = $('#soTypeSelect').val();
         let order_confirmation = $('#orderSelect').val();
 
+        // Cek apakah ada setidaknya satu produk yang dicentang
+        var selectedRows = $('.rowCheckbox:checked');
+
+        // Lakukan tindakan berdasarkan kondisi
+        if (order_confirmation !== '' && order_confirmation != '0') {
+            if (selectedRows.length === 0) {
+                // Jika tidak ada produk yang dicentang, tampilkan pesan kesalahan
+                alert('Pilih setidaknya satu produk untuk melanjutkan.');
+                return; // Hentikan eksekusi fungsi
+            }
+        }
+
         // Lanjutkan dengan pengiriman form
         $("select").removeAttr("disabled");
         if (so_type == "Stock") {
@@ -642,6 +654,7 @@ function getDetailOrder(order_number, response) {
                 // Mendapatkan hasil pencarian
                 let result = getFilteredProduct(type, code);
                 // return result[0]['description'];
+                // console.log(result[0].description + ' | Perforasi: ' + result[0].perforasi);
                 return result;
                 // Menampilkan hasil pencarian (misalnya, di konsol)
                 // console.log(result);
@@ -673,8 +686,7 @@ function getDetailOrder(order_number, response) {
 
             // let checkboxHtml = isInCompare ? '' : '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '">';
             let tableColor = isInCompare ? 'table-danger' : '';
-
-            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
+            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + ' | Perforasi: ' + description[0]['perforasi'] + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
 
         }
 
@@ -716,7 +728,8 @@ function fetchProducts(selectElement) {
                 // Tanggapi dengan mengisi opsi produk sesuai data dari server
                 // console.log(response);
                 $.each(response.products, function (index, product) {
-                    options += '<option value="' + product.id + '">' + product.description + '</option>';
+                    $perforasi = product.perforasi == null ? '-' : product.perforasi;
+                    options += '<option value="' + product.id + '">' + product.description + ' | Perforasi: ' + $perforasi + '</option>';
                 });
                 productSelect.html(options);
 
@@ -871,9 +884,10 @@ function editSalesOrder() {
                     $('.typeProductSelect').val(response.order.type_product);
                     // Function untuk menambahkan opsi produk ke elemen select
                     function appendProductOption(product) {
+                        $perforasi = product.perforasi == null ? '-' : product.perforasi;
                         $('.productSelect').append($('<option>', {
                             value: product.id,
-                            text: product.description
+                            text: product.description + ' | Perforasi: ' + $perforasi
                         }));
                     }
 
