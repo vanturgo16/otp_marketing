@@ -83,13 +83,13 @@
                     </button>
 
                     <!-- App Search-->
-                    <form class="app-search d-none d-lg-block">
+                    {{-- <form class="app-search d-none d-lg-block">
                         <div class="position-relative">
                             <input type="text" class="form-control" placeholder="Search...">
                             <button class="btn btn-primary" type="button"><i
                                     class="bx bx-search-alt align-middle"></i></button>
                         </div>
-                    </form>
+                    </form> --}}
                 </div>
 
                 <div class="d-flex">
@@ -164,7 +164,7 @@
                             </a>
                         </li>
                         @include('layouts.menu_marketing')
-                       
+
                 </div>
                 <!-- Sidebar -->
             </div>
@@ -428,6 +428,13 @@
 
     <!-- datepicker js -->
     {{-- <script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script> --}}
+
+    <script>
+        $(document).ready(function() {
+            $('body').addClass('sidebar-enable');
+            $('body').attr('data-sidebar-size', 'sm');
+        });
+    </script>
 
     @if (request()->is('marketing/*'))
         <script>

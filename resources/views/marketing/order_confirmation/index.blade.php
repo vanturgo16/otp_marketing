@@ -64,6 +64,10 @@
                                 class="btn btn-primary waves-effect btn-label waves-light">
                                 <i class="mdi mdi-plus-box label-icon"></i> Add New Data
                             </a>
+                            <button type="button" class="btn btn-light waves-effect btn-label waves-light"
+                                id="modalExportData">
+                                <i class="mdi mdi-export label-icon"></i> Export Data
+                            </button>
                         </div>
                         <div class="card-body">
                             <input type="hidden" name="_token" id="csrf-token" value="{{ Session::token() }}" />
@@ -138,6 +142,54 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Static Backdrop Modal Export Data -->
+    <div class="modal fade" id="exportData" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        role="dialog" aria-labelledby="exportDataLabel" aria-hidden="true">
+        <form action="{{ route('marketing.orderConfirmation.exportData') }}" method="POST">
+            @csrf
+            @method('GET')
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exportDataLabel">Export Data Order Confirmation</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-2">
+                            <label for="start_date" class="col-sm-3 col-form-label">Start Date</label>
+                            <div class="col-sm-9">
+                                <input type="date" class="form-control" name="start_date" id="start_date"
+                                    value="{{ date('Y-m-d') }}" required>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <label for="end_date" class="col-sm-3 col-form-label">End Date</label>
+                            <div class="col-sm-9">
+                                <input type="date" class="form-control" name="end_date" id="end_date"
+                                    value="{{ date('Y-m-d') }}" required>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <label for="status" class="col-sm-3 col-form-label">Status</label>
+                            <div class="col-sm-9">
+                                <select class="form-control data-select2" name="status" id="statusSelectOption"
+                                    style="width: 100%" required>
+                                    <option value="">** Please select a Status</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary waves-effect btn-label waves-light">
+                            <i class="mdi mdi-export label-icon"></i> Export
+                        </button>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
 @endsection
 

@@ -28,6 +28,8 @@ Route::group(
       Route::post('/bulk-deleted', 'bulkDeleted')->name('marketing.orderConfirmation.bulkDeleted');
       Route::get('/preview/{encryptedOCNumber}', 'preview')->name('marketing.orderConfirmation.preview');
       Route::get('/print/{encryptedOCNumber}', 'print')->name('marketing.orderConfirmation.print');
+      Route::get('/get-status', 'getStatus')->name('marketing.orderConfirmation.getStatus');
+      Route::get('/export-data', 'exportData')->name('marketing.orderConfirmation.exportData');
     });
   }
 );

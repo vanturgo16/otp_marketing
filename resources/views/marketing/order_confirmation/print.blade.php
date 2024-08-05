@@ -15,7 +15,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-8 d-flex align-items-center gap-10">
-                <img src="http://eks.olefinatifaplas.my.id/img/otp-icon.jpg" width="100" height="100">
+                <img src="{{ asset('assets/images/icon-otp.png') }}" width="100" height="100" alt="Logo OTP">
                 <small style="padding-left: 10px">
                     Jl. Raya Serang KM 16.8 Desa Telaga, Kec. Cikupa<br />
                     Tangerang-Banten 15710<br />
@@ -28,7 +28,7 @@
         </div>
 
         <div class="row text-center">
-            <h1>ORDER CONFIRMATION</h1>
+            <h3>ORDER CONFIRMATION</h3>
             <p>Nomor: {{ $orderConfirmation->oc_number }}</p>
         </div>
 

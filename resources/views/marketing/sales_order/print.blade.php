@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Sales ORder {{ $salesOrder->so_number }}</title>
+    <title>Sales Order {{ $salesOrder->so_number }}</title>
     <link rel="shortcut icon" href="{{ asset('assets/images/icon-otp.png') }}">
     <!-- Bootstrap Css -->
     <link href="{{ asset('assets/css/bootstrap.min.css') }}" id="bootstrap-style" rel="stylesheet" type="text/css" />

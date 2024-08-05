@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Marketing;
 
+use App\Exports\ExportPOCustomer;
+use PDF;
 use Browser;
 use DataTables;
 use App\Models\MstUnits;
@@ -13,12 +15,13 @@ use App\Traits\AuditLogsTrait;
 use App\Models\MstTermPayments;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\Marketing\salesOrder;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Marketing\InputPOCust;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\Marketing\InputPOCustDetail;
 use App\Models\Marketing\orderConfirmation;
 use App\Models\Marketing\orderConfirmationDetail;
-use PDF;
 
 class InputPOCustController extends Controller
 {
@@ -675,5 +678,56 @@ class InputPOCustController extends Controller
             ->first();
         // dd($pu_customer);
         return view('marketing.input_po_customer.print', compact('inputPOCustomer'));
+    }
+
+    public  function getStatus()
+    {
+        $status = salesOrder::select('status')->groupBy('status')->orderBy('status', 'asc')->get();
+
+        return response()->json($status);
+    }
+
+    public function exportData(Request $request)
+    {
+        $data = $this->fetchSalesOrderData(
+            $request->start_date,
+            $request->end_date,
+            $request->status
+        );
+
+        return Excel::download(new ExportPOCustomer($data), 'po_customer_' . $request->start_date . ' s.d. ' . $request->end_date . '_' . $request->status . '.xlsx');
+        // return response()->json($data);
+    }
+
+    private function fetchSalesOrderData($startDate, $endDate, $status)
+    {
+        // $query = salesOrder::whereBetween('date', [$startDate, $endDate]);
+        $query = DB::table('sales_orders as a')
+            ->leftJoin('master_customers as b', 'a.id_master_customers', '=', 'b.id')
+            ->leftJoin('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
+            // ->join('sales_order_details as d', 'a.so_number', '=', 'd.id_sales_orders')
+            ->join(
+                \DB::raw(
+                    '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product, perforasi FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product, perforasi FROM master_wips WHERE status = \'Active\') e'
+                ),
+                function ($join) {
+                    // $join->on('d.id_master_products', '=', 'e.id');
+                    // $join->on('d.type_product', '=', 'e.type_product');
+                    $join->on('a.id_master_products', '=', 'e.id');
+                    $join->on('a.type_product', '=', 'e.type_product');
+                }
+            )
+            // ->join('master_units as f', 'd.id_master_units', '=', 'f.id')
+            ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
+            // ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'd.qty', 'd.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
+            ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'a.so_category', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.price', 'a.total_price', 'a.due_date', 'a.status', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi');
+
+        if ($status !== 'All Status') {
+            $query->where('a.status', $status);
+        }
+        $query->whereBetween('a.date', [$startDate, $endDate]);
+        $query->orderBy('a.date', 'desc');
+
+        return $query->get();
     }
 }

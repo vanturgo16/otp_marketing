@@ -25,6 +25,8 @@ Route::group(
       Route::post('/bulk-deleted', 'bulkDeleted')->name('marketing.inputPOCust.bulkDeleted');
       Route::get('/preview/{encryptedPoNumber}', 'preview')->name('marketing.inputPOCust.preview');
       Route::get('/print/{encryptedPoNumber}', 'print')->name('marketing.inputPOCust.print');
+      Route::get('/get-status', 'getStatus')->name('marketing.inputPOCust.getStatus');
+      Route::get('/export-data', 'exportData')->name('marketing.inputPOCust.exportData');
     });
   }
 );

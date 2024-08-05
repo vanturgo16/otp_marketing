@@ -29,6 +29,8 @@ Route::group(
       Route::get('/print/{encryptedSONumber}', 'print')->name('marketing.salesOrder.print');
       Route::get('/generateWO/{encryptedSONumber}', 'generateWO')->name('marketing.salesOrder.generateWO');
       Route::post('/cancel-qty', 'cancelQty')->name('marketing.salesOrder.cancelQty');
+      Route::get('/get-status', 'getStatus')->name('marketing.salesOrder.getStatus');
+      Route::get('/export-data', 'exportData')->name('marketing.salesOrder.exportData');
     });
   }
 );
