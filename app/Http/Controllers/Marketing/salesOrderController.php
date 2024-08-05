@@ -12,11 +12,13 @@ use Illuminate\Http\Request;
 use App\Models\ppic\workOrder;
 use App\Traits\AuditLogsTrait;
 use App\Models\MstTermPayments;
+use App\Exports\ExportSalesOrder;
 use Illuminate\Support\Facades\DB;
 use App\Models\MstCustomersAddress;
 use App\Http\Controllers\Controller;
 use App\Models\Marketing\salesOrder;
 use App\Models\ppic\workOrderDetail;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Marketing\InputPOCust;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\Marketing\salesOrderDetail;
@@ -67,7 +69,7 @@ class salesOrderController extends Controller
                 // ->join('master_units as f', 'd.id_master_units', '=', 'f.id')
                 ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
                 // ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'd.qty', 'd.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
-                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'a.qty', 'a.qty_results', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi')
+                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'a.qty', 'a.qty_results', 'a.outstanding_delivery_qty', 'a.cancel_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi')
                 ->orderBy($columns[$orderColumn], $orderDirection);
 
             if ($request->has('type')) {
@@ -95,6 +97,11 @@ class salesOrderController extends Controller
                 });
             }
 
+            // Update status menjadi Closed jika outstanding_delivery_qty = 0
+            DB::table('sales_orders')
+                ->where('outstanding_delivery_qty', 0)
+                ->update(['status' => 'Closed']);
+
             return DataTables::of($query)
                 ->addColumn('action', function ($data) {
                     return view('marketing.sales_order.action', compact('data'));
@@ -105,10 +112,22 @@ class salesOrderController extends Controller
                 })
                 ->addColumn('progress', function ($data) {
                     $qty_results = $data->qty_results == null ? 0 : $data->qty_results;
-                    $qty_cancel = $data->outstanding_delivery_qty == null ? 0 : $data->outstanding_delivery_qty;
+                    $qty_delivery = $data->outstanding_delivery_qty == null ? 0 : $data->outstanding_delivery_qty;
+                    $qty_cancel = $data->cancel_qty == null ? 0 : $data->cancel_qty;
+
                     $qty = $data->qty . ' ' . $data->unit_code;
-                    $delivery_qty = $qty_results . ' ' . $data->unit_code;
-                    $outstanding_qty = ($data->qty - ($qty_results + $qty_cancel)) . ' ' . $data->unit_code;
+                    if ($data->cancel_qty == null) {
+                        if ($data->qty == $qty_delivery || $data->outstanding_delivery_qty === null) {
+                            $delivery_qty = 0  . ' ' . $data->unit_code;
+                            $outstanding_qty =  $qty . ' ' . $data->unit_code;
+                        } else {
+                            $delivery_qty = $data->qty - $qty_delivery  . ' ' . $data->unit_code;
+                            $outstanding_qty =  $qty_delivery . ' ' . $data->unit_code;
+                        }
+                    } else {
+                        $delivery_qty = $data->qty - ($qty_delivery + $data->cancel_qty) . ' ' . $data->unit_code;
+                        $outstanding_qty =  ($data->qty - $qty_cancel) - ($data->qty - ($qty_delivery + $data->cancel_qty)) . ' ' . $data->unit_code;
+                    }
                     $cancel_qty = ($qty_cancel) . ' ' . $data->unit_code;
 
                     $dueDate = Carbon::parse($data->due_date);
@@ -220,7 +239,7 @@ class salesOrderController extends Controller
                 'price' => $data_product['price'],
                 'total_price' => $request->total_price,
                 'due_date' => $request->due_date,
-                // 'outstanding_delivery_qty' => $request->outstanding_delivery_qty,
+                'outstanding_delivery_qty' => $data_product['qty'],
                 'id_master_customers' => $request->id_master_customers,
                 'id_master_customer_addresses' => $request->id_master_customer_addresses,
                 'id_master_salesmen' => $request->id_master_salesmen,
@@ -1049,7 +1068,7 @@ class salesOrderController extends Controller
 
             // Contoh: Update status menjadi 'Posted'
             salesOrder::where('so_number', $so_number)
-                ->update(['outstanding_delivery_qty' => $cancel_qty, 'updated_at' => now()]);
+                ->update(['outstanding_delivery_qty' => \DB::raw('qty - ' . $cancel_qty), 'cancel_qty' => $cancel_qty, 'updated_at' => now()]);
 
             DB::commit();
             $this->saveLogs('Cancel Qty in ' . $so_number . '. Qty cancel : ' . $cancel_qty);
@@ -1059,5 +1078,51 @@ class salesOrderController extends Controller
             // Tangani kesalahan jika diperlukan
             return response()->json(['error' => 'Error cancel qty', 'type' => 'error'], 500);
         }
+    }
+
+    public  function getStatus()
+    {
+        $status = salesOrder::select('status')->groupBy('status')->orderBy('status', 'asc')->get();
+
+        return response()->json($status);
+    }
+
+    public function exportData(Request $request)
+    {
+        $data = $this->fetchSalesOrderData(
+            $request->start_date,
+            $request->end_date,
+            $request->status
+        );
+
+        return Excel::download(new ExportSalesOrder($data), 'sales_order_' . $request->start_date . ' s.d. ' . $request->end_date . '_' . $request->status . '.xlsx');
+        // return response()->json($data);
+    }
+
+    private function fetchSalesOrderData($startDate, $endDate, $status)
+    {
+        // $query = salesOrder::whereBetween('date', [$startDate, $endDate]);
+        $query = DB::table('sales_orders as a')
+            ->leftJoin('master_customers as b', 'a.id_master_customers', '=', 'b.id')
+            ->leftJoin('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
+            ->join(
+                \DB::raw(
+                    '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product, perforasi FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product, perforasi FROM master_wips WHERE status = \'Active\') e'
+                ),
+                function ($join) {
+                    $join->on('a.id_master_products', '=', 'e.id');
+                    $join->on('a.type_product', '=', 'e.type_product');
+                }
+            )
+            ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
+            ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'a.qty', 'a.qty_results', 'a.outstanding_delivery_qty', 'a.cancel_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi');
+
+        if ($status !== 'All Status') {
+            $query->where('a.status', $status);
+        }
+        $query->whereBetween('a.date', [$startDate, $endDate]);
+        $query->orderBy('a.date', 'desc');
+
+        return $query->get();
     }
 }

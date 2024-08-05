@@ -4,18 +4,20 @@ namespace App\Http\Controllers\Marketing;
 
 use Browser;
 use DataTables;
-use App\Http\Controllers\Controller;
-use App\Models\Marketing\orderConfirmation;
-use App\Models\Marketing\OrderConfirmationDetail;
-use App\Models\MstCurrencies;
+use App\Models\MstUnits;
 use App\Models\MstCustomers;
 use App\Models\MstSalesmans;
-use App\Models\MstTermPayments;
-use App\Models\MstUnits;
-use App\Traits\AuditLogsTrait;
 use Illuminate\Http\Request;
+use App\Models\MstCurrencies;
+use App\Traits\AuditLogsTrait;
+use App\Models\MstTermPayments;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Crypt;
+use App\Exports\ExportOrderConfirmation;
+use App\Models\Marketing\orderConfirmation;
+use App\Models\Marketing\OrderConfirmationDetail;
 
 class orderConfirmationController extends Controller
 {
@@ -602,5 +604,41 @@ class orderConfirmationController extends Controller
             ->first();
         // dd($pu_customer);
         return view('marketing.order_confirmation.print', compact('orderConfirmation'));
+    }
+
+    public  function getStatus()
+    {
+        $status = orderConfirmation::select('status')->groupBy('status')->orderBy('status', 'asc')->get();
+
+        return response()->json($status);
+    }
+
+    public function exportData(Request $request)
+    {
+        $data = $this->fetchSalesOrderData(
+            $request->start_date,
+            $request->end_date,
+            $request->status
+        );
+
+        return Excel::download(new ExportOrderConfirmation($data), 'order_confirmation_' . $request->start_date . ' s.d. ' . $request->end_date . '_' . $request->status . '.xlsx');
+        // return response()->json($data);
+    }
+
+    private function fetchSalesOrderData($startDate, $endDate, $status)
+    {
+        // $query = salesOrder::whereBetween('date', [$startDate, $endDate]);
+        $query = DB::table('order_confirmations as a')
+            ->join('master_customers as b', 'a.id_master_customers', '=', 'b.id')
+            ->join('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
+            ->select('a.id', 'a.oc_number', 'a.date', 'b.name as customer', 'c.name as salesman', 'a.total_price', 'a.ppn', 'a.status');
+
+        if ($status !== 'All Status') {
+            $query->where('a.status', $status);
+        }
+        $query->whereBetween('a.date', [$startDate, $endDate]);
+        $query->orderBy('a.date', 'desc');
+
+        return $query->get();
     }
 }
