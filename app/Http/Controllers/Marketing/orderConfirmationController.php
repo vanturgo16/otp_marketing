@@ -428,6 +428,16 @@ class orderConfirmationController extends Controller
                 ->where('a.status', 'Active')
                 ->select('a.id', 'a.product_code', 'a.description', 'a.perforasi')
                 ->get();
+        } else if ($typeProduct == 'RM') {
+            $products = DB::table('master_raw_materials as a')
+                ->where('a.status', 'Active')
+                ->select('a.id', 'a.rm_code', 'a.description')
+                ->get();
+        } else if ($typeProduct == 'AUX') {
+            $products = DB::table('master_tool_auxiliaries as a')
+                // ->where('a.status', 'Active')
+                ->select('a.id', 'a.code', 'a.description')
+                ->get();
         }
         return response()->json(['products' => $products]);
     }
@@ -445,6 +455,18 @@ class orderConfirmationController extends Controller
         } else if ($typeProduct == 'FG') {
             $product = DB::table('master_product_fgs as a')
                 ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price')
+                // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                ->where('a.id', $idProduct)
+                ->first();
+        } else if ($typeProduct == 'RM') {
+            $product = DB::table('master_raw_materials as a')
+                ->select('a.id', 'a.description', 'a.id_master_units')
+                // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
+                ->where('a.id', $idProduct)
+                ->first();
+        } else if ($typeProduct == 'AUX') {
+            $product = DB::table('master_tool_auxiliaries as a')
+                ->select('a.id', 'a.description', 'a.id_master_units')
                 // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();
@@ -473,6 +495,15 @@ class orderConfirmationController extends Controller
                 DB::table('master_wips')
                     ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"), 'perforasi')
                     ->where('status', 'Active')
+            )
+            ->unionAll(
+                DB::table('master_raw_materials')
+                    ->select('id', 'rm_code as product_code', 'description', 'id_master_units', DB::raw("'RM' as type_product"), DB::raw('NULL as perforasi'))
+                    ->where('status', 'Active')
+            )
+            ->unionAll(
+                DB::table('master_tool_auxiliaries')
+                    ->select('id', 'code as product_code', 'description', 'id_master_units', DB::raw("'AUX' as type_product"), DB::raw('NULL as perforasi'))
             )
             ->get();
 

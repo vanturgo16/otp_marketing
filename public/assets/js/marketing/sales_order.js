@@ -172,6 +172,38 @@ $(document).ready(function () {
 
         // Panggil fungsi saat halaman dimuat
         toggleElementsVisibility();
+
+        if (so_type == 'Reguler' || so_type == 'Sample' || so_type == 'Stock') {
+            // $('.typeProductSelect').empty();
+            let optionsTypeProduct = `<option value="">** Please select a Type Product</option>` +
+                `<option value="WIP">WIP</option>` +
+                `<option value="FG">FG</option>`;
+            $('.typeProductSelect').html(optionsTypeProduct);
+        } else if (so_type == 'Raw Material'){
+            let optionsTypeProduct = `<option value="">** Please select a Type Product</option>` +
+                `<option value="RM">RAW MATERIAL</option>`;
+            $('.typeProductSelect').html(optionsTypeProduct);
+        } else if (so_type == 'Machine'){
+            let optionsTypeProduct = `<option value="">** Please select a Type Product</option>` +
+                `<option value="AUX">SPAREPART / AUXILIARY</option>`;
+            $('.typeProductSelect').html(optionsTypeProduct);
+        }
+        
+        let unitSelect = $('.unitSelect');
+        let options = '<option value="">** Please select a Product</option>';
+        $('.productSelect').html(options);
+
+        getAllUnit()
+        .then(response => {
+            // Lakukan sesuatu dengan response
+            let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit_code}</option>`).join('')}`;
+            // unitSelect.html(optionsUnit);
+            unitSelect.html(optionsUnit);
+        })
+        .catch(error => {
+            // Tangani kesalahan
+            console.error(error);
+        });
     });
 
     // ketika option customer berubah
@@ -686,7 +718,8 @@ function getDetailOrder(order_number, response) {
 
             // let checkboxHtml = isInCompare ? '' : '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '">';
             let tableColor = isInCompare ? 'table-danger' : '';
-            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + ' | Perforasi: ' + description[0]['perforasi'] + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
+            let $perforasi = description[0]['perforasi'] == null ? '-' : description[0]['perforasi'];
+            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + ' | Perforasi: ' + $perforasi + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
 
         }
 
@@ -1052,7 +1085,7 @@ $('#modalExportData').on('click', function () {
             $('.data-select2').select2({
                 width: 'resolve', // need to override the changed default
                 theme: "classic",
-                dropdownParent: $("#exportData") 
+                dropdownParent: $("#exportData")
             });
             $('#exportData').modal('show');
         },
