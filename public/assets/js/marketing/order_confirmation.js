@@ -281,7 +281,11 @@ function cloneRow() {
     }, 300); // Sesuaikan waktu animasi (dalam milidetik) dengan durasi transisi CSS
 
     // $clone.find('.data-select2').select2();
-    $('.data-select2').select2();
+    $('.data-select2').select2({
+        width: 'resolve', // need to override the changed default
+        theme: "classic"
+    });
+    // $('.data-select2').select2();
     // Tambahkan class 'remove-transition' pada elemen yang baru di-klon untuk animasi ketika menambahkan baris
     $clone.addClass('remove-transition');
 

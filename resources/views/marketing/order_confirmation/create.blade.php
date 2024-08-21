@@ -190,6 +190,8 @@
                                                                             select a Type Product</option>
                                                                         <option value="WIP">WIP</option>
                                                                         <option value="FG">FG</option>
+                                                                        <option value="RM">RAW MATERIAL</option>
+                                                                        <option value="AUX">AUXILIARY</option>
                                                                     </select>
                                                                 </div>
                                                             </div>

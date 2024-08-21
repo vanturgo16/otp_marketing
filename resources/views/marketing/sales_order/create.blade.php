@@ -223,8 +223,6 @@
                                                 required>
                                                 <option value="">** Please
                                                     select a Type Product</option>
-                                                <option value="WIP">WIP</option>
-                                                <option value="FG">FG</option>
                                             </select>
                                         </div>
                                     </div>

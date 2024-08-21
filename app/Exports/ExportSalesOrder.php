@@ -37,7 +37,7 @@ class ExportSalesORder implements FromCollection, WithHeadings, WithStyles, With
         'product_code' => $item->product_code,
         'description' => $item->description,
         'perforasi' => $item->perforasi,
-        'progress' => "Due Date: {$item->due_date}\nQty: {$item->qty}",
+        // 'progress' => "Due Date: {$item->due_date}\nQty: {$item->qty}",
         'status' => $item->status,
       ];
     });
@@ -56,7 +56,7 @@ class ExportSalesORder implements FromCollection, WithHeadings, WithStyles, With
       'Product Code',
       'Product Description',
       'Perforasi',
-      'Progress',
+      // 'Progress',
       'Status',
     ];
   }
@@ -73,7 +73,7 @@ class ExportSalesORder implements FromCollection, WithHeadings, WithStyles, With
   {
     return [
       AfterSheet::class => function (AfterSheet $event) {
-        $cellRange = 'A1:L' . ($this->data->count() + 1); // Adjust the cell range as needed
+        $cellRange = 'A1:K' . ($this->data->count() + 1); // Adjust the cell range as needed
         $styleArray = [
           'borders' => [
             'allBorders' => [
@@ -85,7 +85,7 @@ class ExportSalesORder implements FromCollection, WithHeadings, WithStyles, With
         $event->sheet->getDelegate()->getStyle($cellRange)->applyFromArray($styleArray);
 
         // Auto size columns
-        foreach (range('A', 'L') as $columnID) {
+        foreach (range('A', 'K') as $columnID) {
           $event->sheet->getDelegate()->getColumnDimension($columnID)->setAutoSize(true);
         }
 
