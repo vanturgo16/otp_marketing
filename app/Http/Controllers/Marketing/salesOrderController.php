@@ -911,13 +911,13 @@ class salesOrderController extends Controller
         $idProduct = $salesOrder->id_master_products;
         if ($typeProduct == 'WIP') {
             $product = DB::table('master_wips as a')
-                ->select('a.id', 'a.description', 'a.id_master_units', 'b.unit_code')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'b.unit_code', 'a.perforasi')
                 ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();
         } else if ($typeProduct == 'FG') {
             $product = DB::table('master_product_fgs as a')
-                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price', 'b.unit_code')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price', 'b.unit_code', 'a.perforasi')
                 ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();
@@ -934,6 +934,7 @@ class salesOrderController extends Controller
                 ->where('a.id', $idProduct)
                 ->first();
         }
+        // echo isset($product->perforasi);
         // echo json_encode($product);
         // exit;
         return view('marketing.sales_order.print', compact('salesOrder', 'product'));

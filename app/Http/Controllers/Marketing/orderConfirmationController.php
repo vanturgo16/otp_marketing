@@ -630,10 +630,11 @@ class orderConfirmationController extends Controller
     public function print($encryptedOCNumber)
     {
         $oc_number = Crypt::decrypt($encryptedOCNumber);
-        $orderConfirmation = orderConfirmation::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit', 'masterSalesman')
+        $orderConfirmation = orderConfirmation::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit', 'masterSalesman', 'masterCustomer', 'masterCustomer.currency', 'masterCustomer.termPayment', 'masterCustomer.customerAddress')
             ->where('oc_number', $oc_number)
             ->first();
-        // dd($pu_customer);
+        // return json_encode($orderConfirmation);
+        // dd($orderConfirmation);
         return view('marketing.order_confirmation.print', compact('orderConfirmation'));
     }
 
