@@ -15,16 +15,22 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-8 d-flex align-items-center gap-10">
-                <strong class="fs-4">PT OLEFINA TIFAPLAS POLIKEMINDO</strong>
+                <img src="{{ asset('assets/images/icon-otp.png') }}" width="100" height="100" alt="Logo OTP">
+                <small style="padding-left: 10px">
+                    <b>PT. OLEFINA TIFAPLAS POLIKEMINDO</b><br />
+                    Jl. Raya Serang KM 16.8 Desa Telaga, Kec. Cikupa<br />
+                    Tangerang-Banten 15710<br />
+                    Tlp. +62 21 5960801/05, Fax. +62 21 5960776<br />
+                </small>
             </div>
-            {{-- <div class="col-4 d-flex justify-content-end">
-                FM-SM-MKT-02, Rev. 0, 01 September 2021
-            </div> --}}
+            <div class="col-4 d-flex justify-content-end">
+                FM-SM-MKT-03, Rev. 0, 01 September 2021
+            </div>
         </div>
 
         <div class="row text-center">
             <div class="col-12">
-                <strong class="fs-3">SALES ORDER</strong>
+                <strong class="fs-5">SALES ORDER</strong>
                 <hr>
             </div>
         </div>
@@ -63,6 +69,11 @@
                         <td>{{ $salesOrder->qty . ' ' . $product->unit_code }}</td>
                     </tr>
                     <tr>
+                        <td>Perforasi</td>
+                        <td>:</td>
+                        <td>{{ isset($product->perforasi) ? $product->perforasi : '-' }}</td>
+                    </tr>
+                    <tr>
                         <td>Warna</td>
                         <td>:</td>
                         <td>{{ $salesOrder->color }}</td>
@@ -70,7 +81,7 @@
                     <tr>
                         <td>Tanggal Kirim</td>
                         <td>:</td>
-                        <td>-</td>
+                        <td>{{ $salesOrder->due_date }}</td>
                     </tr>
                     <tr>
                         <td>Keterangan</td>
@@ -104,10 +115,10 @@
             </div>
             <div class="col-4 text-center">
                 <p class="mb-5">Mengetahui,</p>
-                <p><b>(.............)</b></p>
+                <p><b>(BUDI TRIADI)</b></p>
             </div>
             <div class="col-4 text-center">
-                <p class="mb-5">Pemesan</p>
+                <p class="mb-5">Dibuat</p>
                 <p><b>(.............)</b></p>
             </div>
         </div>
