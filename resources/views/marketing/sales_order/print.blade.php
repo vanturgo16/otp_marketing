@@ -9,9 +9,31 @@
     <link rel="shortcut icon" href="{{ asset('assets/images/icon-otp.png') }}">
     <!-- Bootstrap Css -->
     <link href="{{ asset('assets/css/bootstrap.min.css') }}" id="bootstrap-style" rel="stylesheet" type="text/css" />
+
+    <style>
+        /* Watermark CSS */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            font-size: 100px;
+            color: rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Ensure content is above the watermark */
+        .content {
+            position: relative;
+            z-index: 2;
+        }
+    </style>
 </head>
 
 <body>
+    <div class="watermark {{ $salesOrder->status == 'Request' || $salesOrder->status == 'Un Posted' ? '' : 'd-none' }}">DRAFT</div>
     <div class="container-fluid">
         <div class="row">
             <div class="col-8 d-flex align-items-center gap-10">
