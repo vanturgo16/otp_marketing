@@ -4,17 +4,19 @@
         Action <i class="mdi mdi-chevron-down"></i>
     </button>
     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop">
-        @if ($data->status != 'Closed')
-        <li>
-            <button
-                class="dropdown-item drpdwn-{{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'scs' : 'wrn' }}"
-                data-so-number="{{ $data->so_number }}" data-status="{{ $data->status }}"
-                onclick="showModal(this);"><span
-                    class="mdi {{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'mdi-check-bold' : 'mdi-arrow-left-top-bold' }}"></span>
-                |
-                {{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'Posted' : 'Un Posted' }}</button>
-        </li>
-        @endif
+        @can('PPIC_unposted')
+            @if ($data->status != 'Closed')
+                <li>
+                    <button
+                        class="dropdown-item drpdwn-{{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'scs' : 'wrn' }}"
+                        data-so-number="{{ $data->so_number }}" data-status="{{ $data->status }}"
+                        onclick="showModal(this);"><span
+                            class="mdi {{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'mdi-check-bold' : 'mdi-arrow-left-top-bold' }}"></span>
+                        |
+                        {{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'Posted' : 'Un Posted' }}</button>
+                </li>
+            @endif
+        @endcan
         <li>
             {{-- <button class="dropdown-item drpdwn-scn" onclick="modalPDF('{{ encrypt($data->so_number) }}')"><span
                     class="mdi mdi-printer"></span> | Preview or Print</button> --}}
@@ -40,7 +42,9 @@
         @endif
         @if ($data->status == 'Posted')
             <li>
-                <button class="dropdown-item drpdwn-cnl" onclick="modalCancelQty('{{ $data->so_number }}', '{{ $data->qty }}')"><span class="mdi mdi-archive-cancel"></span> | Cancel
+                <button class="dropdown-item drpdwn-cnl"
+                    onclick="modalCancelQty('{{ $data->so_number }}', '{{ $data->qty }}')"><span
+                        class="mdi mdi-archive-cancel"></span> | Cancel
                     Qty</button>
             </li>
         @endif
