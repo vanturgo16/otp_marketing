@@ -4,15 +4,17 @@
         Action <i class="mdi mdi-chevron-down"></i>
     </button>
     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop">
-        <li>
-            <button
-                class="dropdown-item drpdwn-{{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'scs' : 'wrn' }}"
-                data-oc-number="{{ $data->oc_number }}" data-status="{{ $data->status }}"
-                onclick="showModal(this);"><span
-                    class="mdi {{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'mdi-check-bold' : 'mdi-arrow-left-top-bold' }}"></span>
-                |
-                {{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'Posted' : 'Un Posted' }}</button>
-        </li>
+        @can('PPIC_unposted')
+            <li>
+                <button
+                    class="dropdown-item drpdwn-{{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'scs' : 'wrn' }}"
+                    data-oc-number="{{ $data->oc_number }}" data-status="{{ $data->status }}"
+                    onclick="showModal(this);"><span
+                        class="mdi {{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'mdi-check-bold' : 'mdi-arrow-left-top-bold' }}"></span>
+                    |
+                    {{ $data->status == 'Request' || $data->status == 'Un Posted' ? 'Posted' : 'Un Posted' }}</button>
+            </li>
+        @endcan
         <li>
             {{-- <button class="dropdown-item drpdwn-scn" onclick="modalPDF('{{ encrypt($data->oc_number) }}')"><span
                     class="mdi mdi-printer"></span> | Preview or Print</button> --}}

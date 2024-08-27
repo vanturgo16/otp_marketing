@@ -179,31 +179,31 @@ $(document).ready(function () {
                 `<option value="WIP">WIP</option>` +
                 `<option value="FG">FG</option>`;
             $('.typeProductSelect').html(optionsTypeProduct);
-        } else if (so_type == 'Raw Material'){
+        } else if (so_type == 'Raw Material') {
             let optionsTypeProduct = `<option value="">** Please select a Type Product</option>` +
                 `<option value="RM">RAW MATERIAL</option>`;
             $('.typeProductSelect').html(optionsTypeProduct);
-        } else if (so_type == 'Machine'){
+        } else if (so_type == 'Machine') {
             let optionsTypeProduct = `<option value="">** Please select a Type Product</option>` +
                 `<option value="AUX">SPAREPART / AUXILIARY</option>`;
             $('.typeProductSelect').html(optionsTypeProduct);
         }
-        
+
         let unitSelect = $('.unitSelect');
         let options = '<option value="">** Please select a Product</option>';
         $('.productSelect').html(options);
 
         getAllUnit()
-        .then(response => {
-            // Lakukan sesuatu dengan response
-            let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit_code}</option>`).join('')}`;
-            // unitSelect.html(optionsUnit);
-            unitSelect.html(optionsUnit);
-        })
-        .catch(error => {
-            // Tangani kesalahan
-            console.error(error);
-        });
+            .then(response => {
+                // Lakukan sesuatu dengan response
+                let optionsUnit = `<option value="">** Please select a Unit</option>${response.map(unit => `<option value="${unit.id}">${unit.unit_code}</option>`).join('')}`;
+                // unitSelect.html(optionsUnit);
+                unitSelect.html(optionsUnit);
+            })
+            .catch(error => {
+                // Tangani kesalahan
+                console.error(error);
+            });
     });
 
     // ketika option customer berubah
@@ -820,7 +820,11 @@ function fethchProductDetail(selectElement) {
                         // Tangani kesalahan
                         console.error(error);
                     });
-                $('.price').val(Math.floor(response.product.price)) || 0;
+                if (response.product.price != undefined) {
+                    $('.price').val(Math.floor(response.product.price)) || 0;
+                } else {
+                    $('.price').val(Math.floor(0)) || 0;
+                }
                 $('.custProductCode').focus();
                 calculateTotalPrice(selectElement);
             },
@@ -837,7 +841,7 @@ function calculateTotalPrice(selectElement) {
     let price = $('.price').val() || 0;
 
     let total_price = qty * price;
-    $('.total_price').val(total_price.toFixed(0));
+    $('.total_price').val(total_price.toFixed(2));
 }
 
 function getAllUnit() {

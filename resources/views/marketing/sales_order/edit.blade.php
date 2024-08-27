@@ -316,8 +316,8 @@
                                     <div class="row mb-4 field-wrapper required-field">
                                         <label for="price" class="col-sm-3 col-form-label">Price</label>
                                         <div class="col-sm-9 ">
-                                            <input type="number" class="form-control price" name="price"
-                                                onkeyup="calculateTotalPrice(this)" required>
+                                            <input type="text" class="form-control price" name="price"
+                                                onkeyup="calculateTotalPrice(this)" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" required>
                                         </div>
                                     </div>
                                     <div class="row mb-4 field-wrapper required-field">
