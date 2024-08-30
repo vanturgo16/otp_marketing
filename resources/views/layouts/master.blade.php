@@ -59,7 +59,7 @@
                 <div class="d-flex">
                     <!-- LOGO -->
                     <div class="navbar-brand-box">
-                        <a href="http://127.0.0.1:8000/menu" class="logo logo-dark">
+                        <a href="https://sso.olefinatifaplas.my.id/menu" class="logo logo-dark">
                             <span class="logo-sm">
                                 <img src="{{ asset('assets/images/icon-otp.png') }}" alt="" height="30">
                             </span>
