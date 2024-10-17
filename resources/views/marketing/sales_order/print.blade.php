@@ -68,7 +68,7 @@
                     <tr>
                         <td>No. Ref</td>
                         <td>:</td>
-                        <td>{{ $salesOrder->reference_number }}</td>
+                        <td>{{ $salesOrder->id_order_confirmations != null ? $salesOrder->id_order_confirmations : $salesOrder->reference_number }}</td>
                     </tr>
                     <tr>
                         <td>Tanggal</td>
