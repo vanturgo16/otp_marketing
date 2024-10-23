@@ -139,6 +139,7 @@ $(document).ready(function () {
                     $('#productTable').append('<tr><td class="text-center" colspan="9">There is no data yet, please select Order Confirmation</td></tr>');
                     $('#total-Price').val('');
                     $('.total_price').val('');
+                    $('.based_price').val('');
                 }
             },
             error: function (xhr, status, error) {
@@ -693,8 +694,18 @@ function getDetailOrder(order_number, response) {
                 // Jika ingin menampilkan hasil pada elemen HTML, sesuaikan kode di sini
             }
 
+            // Fungsi untuk menampilkan based price
+            function getWeight(type, code) {
+                // Mendapatkan hasil pencarian
+                let result = getFilteredProduct(type, code);
+                // return result[0]['description'];
+                // console.log(result[0].description + ' | Perforasi: ' + result[0].perforasi);
+                return result[0].weight;
+            }
+
             // Contoh pemanggilan fungsi dengan tipe dan kode produk tertentu
             let description = displaySearchResult(details[i].type_product, details[i].id_master_product);
+            let weight = getWeight(details[i].type_product, details[i].id_master_product);
             const custProductCode = details[i].cust_product_code !== null ? details[i].cust_product_code : '';
 
             // Check if the product is in response.compare
@@ -719,7 +730,7 @@ function getDetailOrder(order_number, response) {
             // let checkboxHtml = isInCompare ? '' : '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '">';
             let tableColor = isInCompare ? 'table-danger' : '';
             let $perforasi = description[0]['perforasi'] == null ? '-' : description[0]['perforasi'];
-            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + ' | Perforasi: ' + $perforasi + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
+            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + ' | Perforasi: ' + $perforasi + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><span class="based_price">' + (details[i].price / weight).toFixed(0).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
 
         }
 
@@ -810,6 +821,7 @@ function fethchProductDetail(selectElement) {
                 // console.log(response);
                 let unitSelect = $('.unitSelect');
                 let idUnit = response.product.id_master_units;
+                let weight = response.product.weight;
                 getAllUnit()
                     .then(response => {
                         // Lakukan sesuatu dengan response
@@ -826,6 +838,7 @@ function fethchProductDetail(selectElement) {
                     $('.price').val(Math.floor(0)) || 0;
                 }
                 $('.custProductCode').focus();
+                $('.weight').val(weight);
                 calculateTotalPrice(selectElement);
             },
             error: function (xhr, status, error) {
@@ -1097,4 +1110,12 @@ $('#modalExportData').on('click', function () {
             console.error(xhr.responseText);
         }
     });
+});
+
+$(document).on('keyup', '.price', function () {
+    let price = $(this).val();
+    let weight = $('.weight').val();
+    let based_price = price / weight;
+
+    $('.based_price').val(based_price.toFixed(0));
 });

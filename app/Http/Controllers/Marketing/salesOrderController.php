@@ -57,7 +57,7 @@ class salesOrderController extends Controller
                 // ->join('sales_order_details as d', 'a.so_number', '=', 'd.id_sales_orders')
                 ->join(
                     \DB::raw(
-                        '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product, perforasi FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product, perforasi FROM master_wips WHERE status = \'Active\' UNION ALL SELECT id, rm_code as product_code, description, id_master_units, \'RM\' as type_product, \'NULL\'as perforasi FROM master_raw_materials WHERE status = \'Active\' UNION ALL SELECT id, code as product_code, description, id_master_units, \'AUX\' as type_product, \'NULL\' as perforasi FROM master_tool_auxiliaries) e'
+                        '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product, perforasi, weight FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product, perforasi, weight FROM master_wips WHERE status = \'Active\' UNION ALL SELECT id, rm_code as product_code, description, id_master_units, \'RM\' as type_product, \'NULL\'as perforasi, weight FROM master_raw_materials WHERE status = \'Active\' UNION ALL SELECT id, code as product_code, description, id_master_units, \'AUX\' as type_product, \'NULL\' as perforasi, \'\' as weight FROM master_tool_auxiliaries) e'
                     ),
                     function ($join) {
                         // $join->on('d.id_master_products', '=', 'e.id');
@@ -635,21 +635,21 @@ class salesOrderController extends Controller
         $salesmans = $this->getAllSalesman();
         $termPayments = $this->getAllTermPayment();
         $combinedDataProducts = DB::table('master_product_fgs')
-            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"), 'perforasi')
+            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"), 'perforasi', 'weight')
             ->where('status', 'Active')
             ->unionAll(
                 DB::table('master_wips')
-                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"), 'perforasi')
+                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"), 'perforasi', 'weight')
                     ->where('status', 'Active')
             )
             ->unionAll(
                 DB::table('master_raw_materials')
-                    ->select('id', 'rm_code as product_code', 'description', 'id_master_units', DB::raw("'RM' as type_product"), DB::raw('NULL as perforasi'))
+                    ->select('id', 'rm_code as product_code', 'description', 'id_master_units', DB::raw("'RM' as type_product"), DB::raw('NULL as perforasi'), 'weight')
                     ->where('status', 'Active')
             )
             ->unionAll(
                 DB::table('master_tool_auxiliaries')
-                    ->select('id', 'code as product_code', 'description', 'id_master_units', DB::raw("'AUX' as type_product"), DB::raw('NULL as perforasi'))
+                    ->select('id', 'code as product_code', 'description', 'id_master_units', DB::raw("'AUX' as type_product"), DB::raw('NULL as perforasi'), DB::raw('"" as weight'))
             )
             ->get();
 
@@ -729,25 +729,25 @@ class salesOrderController extends Controller
         $idProduct = request()->get('idProduct');
         if ($typeProduct == 'WIP') {
             $product = DB::table('master_wips as a')
-                ->select('a.id', 'a.description', 'a.id_master_units')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'a.weight')
                 // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();
         } else if ($typeProduct == 'FG') {
             $product = DB::table('master_product_fgs as a')
-                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'a.sales_price as price', 'a.weight')
                 // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();
         } else if ($typeProduct == 'RM') {
             $product = DB::table('master_raw_materials as a')
-                ->select('a.id', 'a.description', 'a.id_master_units')
+                ->select('a.id', 'a.description', 'a.id_master_units', 'a.weight')
                 // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();
         } else if ($typeProduct == 'AUX') {
             $product = DB::table('master_tool_auxiliaries as a')
-                ->select('a.id', 'a.description', 'a.id_master_units')
+                ->select('a.id', 'a.description', 'a.id_master_units', DB::raw("'' as weight"))
                 // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                 ->where('a.id', $idProduct)
                 ->first();

@@ -282,6 +282,15 @@
                                                 readonly>
                                         </div>
                                     </div>
+                                    <div class="row mb-4 field-wrapper required-field">
+                                        <label for="based_price" class="col-sm-3 col-form-label">Based Price</label>
+                                        <div class="col-sm-9">
+                                            <input type="hidden" class="form-control weight" name="weight" required
+                                                readonly>
+                                            <input type="text" class="form-control based_price" name="based_price" required
+                                                readonly>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="row d-none" id="product_list">
@@ -297,13 +306,14 @@
                                                         <th>Unit</th>
                                                         <th>Qty</th>
                                                         <th>Price</th>
+                                                        <th>Based Price</th>
                                                         <th>Subtotal</th>
                                                         <td class="align-middle text-center"></td>
                                                     </tr>
                                                 </thead>
                                                 <tbody class="row_products">
                                                     <tr>
-                                                        <td class="text-center" colspan="9">There is no data yet,
+                                                        <td class="text-center" colspan="10">There is no data yet,
                                                             please
                                                             select Order Confirmation</td>
                                                     </tr>
