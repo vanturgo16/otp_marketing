@@ -110,6 +110,7 @@
                                                 Reference<br>Number</th>
                                             <th class="align-middle text-center">Product</th>
                                             <th class="align-middle text-center">Price</th>
+                                            <th class="align-middle text-center">Based Price</th>
                                             <th class="align-middle text-center">Qty</th>
                                             <th class="align-middle text-center">Total Price</th>
                                             <th class="align-middle text-center" data-name="status">Status</th>
@@ -249,7 +250,7 @@
                 ],
                 aaSorting: [
                     [1, 'desc']
-                ], // start to sort data in second column 
+                ], // start to sort data in second column
                 ajax: {
                     url: baseRoute + '/marketing/inputPOCust/',
                     data: function(d) {
@@ -328,6 +329,16 @@
                             // Format data menjadi rupiah
                             return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
                         }
+                    },
+                    {
+                        data: 'basedPrice',
+                        name: 'basedPrice',
+                        orderable: true,
+                        className: 'text-end',
+                        // render: function(data, type, row) {
+                        //     // Format data menjadi rupiah
+                        //     return data.toString();
+                        // }
                     },
                     {
                         data: 'qty',

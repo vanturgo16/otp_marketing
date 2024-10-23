@@ -54,7 +54,7 @@ class InputPOCustController extends Controller
                 // ->join('sales_order_details as d', 'a.so_number', '=', 'd.id_sales_orders')
                 ->join(
                     \DB::raw(
-                        '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product, perforasi FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product, perforasi FROM master_wips WHERE status = \'Active\') e'
+                        '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product, perforasi, weight FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product, perforasi, weight FROM master_wips WHERE status = \'Active\' UNION ALL SELECT id, rm_code as product_code, description, id_master_units, \'RM\' as type_product, \'NULL\'as perforasi, weight FROM master_raw_materials WHERE status = \'Active\' UNION ALL SELECT id, code as product_code, description, id_master_units, \'AUX\' as type_product, \'NULL\' as perforasi, \'\' as weight FROM master_tool_auxiliaries) e'
                     ),
                     function ($join) {
                         // $join->on('d.id_master_products', '=', 'e.id');
@@ -66,7 +66,7 @@ class InputPOCustController extends Controller
                 // ->join('master_units as f', 'd.id_master_units', '=', 'f.id')
                 ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
                 // ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'd.qty', 'd.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
-                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'a.so_category', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.price', 'a.total_price', 'a.due_date', 'a.status', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi')
+                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'a.so_category', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.price', 'a.total_price', 'a.due_date', 'a.status', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi', 'e.weight')
                 ->orderBy($columns[$orderColumn], $orderDirection);
 
             if ($request->has('type')) {
@@ -125,7 +125,22 @@ class InputPOCustController extends Controller
                     $woList = $data->status == 'Request' ? 'Please Wait SO Posted' : 'WO&nbspList';
                     return '<button type="button" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">' . $woList . '</button>';
                 })
-                ->rawColumns(['bulk-action', 'progress', 'status', 'statusLabel', 'wo_list'])
+                ->addColumn('basedPrice', function ($data) {
+                    // Convert 'price' and 'weight' to float
+                    $priceFloat = (float) str_replace(',', '', $data->price); // Menghilangkan koma pada price
+                    $weightFloat = (float) $data->weight;
+
+                    // Pastikan weight tidak 0 untuk menghindari division by zero
+                    if ($weightFloat == 0) {
+                        return 0;
+                    }
+
+                    // Lakukan pembagian
+                    $result = $priceFloat / $weightFloat;
+
+                    return number_format($result, 0, ',', '.');
+                })
+                ->rawColumns(['bulk-action', 'progress', 'status', 'statusLabel', 'wo_list', 'basedPrice'])
                 ->make(true);
         }
         return view('marketing.input_po_customer.index');
@@ -369,7 +384,7 @@ class InputPOCustController extends Controller
         //
     }
 
-    // 
+    //
     public function getData(Request $request)
     {
         // Query dasar
