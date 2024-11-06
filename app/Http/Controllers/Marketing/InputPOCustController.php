@@ -121,6 +121,10 @@ class InputPOCustController extends Controller
                 ->addColumn('statusLabel', function ($data) {
                     return $data->status;
                 })
+                ->addColumn('kg', function ($data) {
+                    $kg = ($data->weight != 0 && $data->weight != '') ? number_format($data->qty * $data->weight, 2, ',', '.') : '0,00';
+                    return $kg . ' KG';
+                })
                 ->addColumn('wo_list', function ($data) {
                     $woList = $data->status == 'Request' ? 'Please Wait SO Posted' : 'WO&nbspList';
                     return '<button type="button" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">' . $woList . '</button>';
@@ -140,7 +144,7 @@ class InputPOCustController extends Controller
 
                     return number_format($result, 0, ',', '.');
                 })
-                ->rawColumns(['bulk-action', 'progress', 'status', 'statusLabel', 'wo_list', 'basedPrice'])
+                ->rawColumns(['bulk-action', 'progress', 'status', 'statusLabel', 'wo_list', 'basedPrice', 'kg'])
                 ->make(true);
         }
         return view('marketing.input_po_customer.index');
@@ -720,10 +724,11 @@ class InputPOCustController extends Controller
         $query = DB::table('sales_orders as a')
             ->leftJoin('master_customers as b', 'a.id_master_customers', '=', 'b.id')
             ->leftJoin('master_salesmen as c', 'a.id_master_salesmen', '=', 'c.id')
-            // ->join('sales_order_details as d', 'a.so_number', '=', 'd.id_sales_orders')
+            ->leftJoin('master_customer_addresses as d', 'a.id_master_customer_addresses', '=', 'd.id')
+            ->leftJoin('master_term_payments as g', 'a.id_master_term_payments', '=', 'g.id')
             ->join(
                 \DB::raw(
-                    '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product, perforasi FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product, perforasi FROM master_wips WHERE status = \'Active\') e'
+                    '(SELECT id, product_code, description, id_master_units, \'FG\' as type_product, perforasi, weight FROM master_product_fgs WHERE status = \'Active\' UNION ALL SELECT id, wip_code as product_code, description, id_master_units, \'WIP\' as type_product, perforasi, weight FROM master_wips WHERE status = \'Active\' UNION ALL SELECT id, rm_code as product_code, description, id_master_units, \'RM\' as type_product, \'\' as perforasi, weight FROM master_raw_materials WHERE status = \'Active\' UNION ALL SELECT id, code as product_code, description, id_master_units, \'AUX\' as type_product, \'\' as perforasi, \'\' as weight FROM master_tool_auxiliaries) e'
                 ),
                 function ($join) {
                     // $join->on('d.id_master_products', '=', 'e.id');
@@ -735,7 +740,7 @@ class InputPOCustController extends Controller
             // ->join('master_units as f', 'd.id_master_units', '=', 'f.id')
             ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
             // ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'd.qty', 'd.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
-            ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'a.so_category', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.price', 'a.total_price', 'a.due_date', 'a.status', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi');
+            ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'a.so_category', 'b.name as customer', 'd.address', 'c.name as salesman', 'a.reference_number', 'a.price', 'a.total_price', 'a.due_date', 'a.color', 'a.non_invoiceable', 'a.remarks', 'a.status', 'a.type_product', 'a.qty', 'a.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi', 'a.ppn', 'g.term_payment', 'e.weight');
 
         if ($status !== 'All Status') {
             $query->where('a.status', $status);

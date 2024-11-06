@@ -264,10 +264,6 @@
                                                 required>
                                                 <option value="">** Please
                                                     select a Type Product</option>
-                                                <option value="WIP">WIP</option>
-                                                <option value="FG">FG</option>
-                                                <option value="RM">RAW MATERIAL</option>
-                                                <option value="AUX">AUXILIARY</option>
                                             </select>
                                         </div>
                                     </div>
@@ -313,11 +309,18 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div class="row mb-4 field-wrapper">
+                                        <label for="kg" class="col-sm-3 col-form-label">KG</label>
+                                        <div class="col-sm-9 ">
+                                            <input type="text" class="form-control kg" name="kg" readonly>
+                                        </div>
+                                    </div>
                                     <div class="row mb-4 field-wrapper required-field">
                                         <label for="price" class="col-sm-3 col-form-label">Price</label>
                                         <div class="col-sm-9 ">
                                             <input type="text" class="form-control price" name="price"
-                                                onkeyup="calculateTotalPrice(this)" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" required>
+                                                onkeyup="calculateTotalPrice(this)"
+                                                oninput="this.value = this.value.replace(/[^0-9.]/g, '')" required>
                                         </div>
                                     </div>
                                     <div class="row mb-4 field-wrapper required-field">
@@ -325,6 +328,15 @@
                                         <div class="col-sm-9">
                                             <input type="text" class="form-control total_price" name="total_price"
                                                 required readonly>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4 field-wrapper">
+                                        <label for="based_price" class="col-sm-3 col-form-label">Based Price</label>
+                                        <div class="col-sm-9">
+                                            <input type="hidden" class="form-control weight" name="weight" required
+                                                readonly>
+                                            <input type="text" class="form-control based_price" name="based_price"
+                                                readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -341,7 +353,9 @@
                                                         <th>Cust Product Code</th>
                                                         <th>Unit</th>
                                                         <th>Qty</th>
+                                                        <th>KG</th>
                                                         <th>Price</th>
+                                                        <th>Based Price</th>
                                                         <th>Subtotal</th>
                                                         <td class="align-middle text-center"></td>
                                                     </tr>

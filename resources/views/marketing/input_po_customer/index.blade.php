@@ -112,6 +112,7 @@
                                             <th class="align-middle text-center">Price</th>
                                             <th class="align-middle text-center">Based Price</th>
                                             <th class="align-middle text-center">Qty</th>
+                                            <th class="align-middle text-center">KG</th>
                                             <th class="align-middle text-center">Total Price</th>
                                             <th class="align-middle text-center" data-name="status">Status</th>
                                         </tr>
@@ -344,6 +345,12 @@
                         data: 'qty',
                         name: 'qty',
                         className: 'text-center',
+                        orderable: true
+                    },
+                    {
+                        data: 'kg',
+                        name: 'kg',
+                        className: 'text-end',
                         orderable: true
                     },
                     {
