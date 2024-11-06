@@ -5,7 +5,7 @@ $(document).ready(function () {
     });
 
     // Panggil fungsi saat halaman dimuat
-    toggleElementsVisibility();
+    // toggleElementsVisibility();
 
     // ketika option customer berubah
     $('#orderSelect').change(function () {
@@ -172,7 +172,7 @@ $(document).ready(function () {
         }
 
         // Panggil fungsi saat halaman dimuat
-        toggleElementsVisibility();
+        // toggleElementsVisibility();
 
         if (so_type == 'Reguler' || so_type == 'Sample' || so_type == 'Stock') {
             // $('.typeProductSelect').empty();
@@ -394,9 +394,9 @@ $(document).ready(function () {
 
         // Lanjutkan dengan pengiriman form
         $("select").removeAttr("disabled");
-        if (so_type == "Stock") {
-            $("#customerSelect, #customerAddressSelect, #salesmanSelect").attr("disabled", true);
-        }
+        // if (so_type == "Stock") {
+        //     $("#customerSelect, #customerAddressSelect, #salesmanSelect").attr("disabled", true);
+        // }
         this.submit();
     });
 
@@ -730,7 +730,7 @@ function getDetailOrder(order_number, response) {
             // let checkboxHtml = isInCompare ? '' : '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '">';
             let tableColor = isInCompare ? 'table-danger' : '';
             let $perforasi = description[0]['perforasi'] == null ? '-' : description[0]['perforasi'];
-            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + ' | Perforasi: ' + $perforasi + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><span class="based_price">' + (details[i].price / weight).toFixed(0).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
+            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + ' | Perforasi: ' + $perforasi + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><span class="kg">' + (details[i].qty * weight).toFixed(2).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><span class="based_price">' + (details[i].price / weight).toFixed(0).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
 
         }
 
@@ -912,6 +912,7 @@ function editSalesOrder() {
                 // console.log(response);
                 let masterCustomerAddress = response.customer_addresses.master_customer_address;
                 let products = response.products
+                let so_type = response.order.so_type
 
                 // Cek apakah hanya ada satu data di master_customer_address
                 if (masterCustomerAddress.length === 1) {
@@ -930,6 +931,22 @@ function editSalesOrder() {
                 if (response.order.id_order_confirmations != null) {
                     getDetailOrder(response.order.id_order_confirmations, response);
                 } else {
+                    if (so_type == 'Reguler' || so_type == 'Sample' || so_type == 'Stock') {
+                        // $('.typeProductSelect').empty();
+                        let optionsTypeProduct = `<option value="">** Please select a Type Product</option>` +
+                            `<option value="WIP">WIP</option>` +
+                            `<option value="FG">FG</option>`;
+                        $('.typeProductSelect').html(optionsTypeProduct);
+                    } else if (so_type == 'Raw Material') {
+                        let optionsTypeProduct = `<option value="">** Please select a Type Product</option>` +
+                            `<option value="RM">RAW MATERIAL</option>`;
+                        $('.typeProductSelect').html(optionsTypeProduct);
+                    } else if (so_type == 'Machine') {
+                        let optionsTypeProduct = `<option value="">** Please select a Type Product</option>` +
+                            `<option value="AUX">SPAREPART / AUXILIARY</option>`;
+                        $('.typeProductSelect').html(optionsTypeProduct);
+                    }
+
                     $('.data-select2').select2("destroy");
                     $('.typeProductSelect').val(response.order.type_product);
                     // Function untuk menambahkan opsi produk ke elemen select
@@ -965,6 +982,16 @@ function editSalesOrder() {
                     $('.unitSelect').val(response.order.id_master_units);
                     $('.price').val(response.order.price);
                     $('.total_price').val(response.order.total_price);
+
+                    let qty = response.order.qty;
+                    let price = response.order.price;
+                    let weight = response.detail_product.weight;
+                    let kg = qty * weight;
+                    let based_price = price / weight;
+
+                    $('.weight').val(weight);
+                    $('.kg').val(kg.toFixed(2));
+                    $('.based_price').val(based_price.toFixed(0));
 
                     // Menginisialisasi Select2 untuk baris baru
                     $('.data-select2').select2({
@@ -1118,4 +1145,12 @@ $(document).on('keyup', '.price', function () {
     let based_price = price / weight;
 
     $('.based_price').val(based_price.toFixed(0));
+});
+
+$(document).on('keyup', '.qty', function () {
+    let qty = $(this).val();
+    let weight = $('.weight').val();
+    let kg = qty * weight;
+
+    $('.kg').val(kg.toFixed(2));
 });
