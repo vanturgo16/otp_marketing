@@ -86,7 +86,7 @@
                             </a>
                             <button type="button" class="btn btn-light waves-effect btn-label waves-light"
                                 id="modalExportData">
-                                <i class="mdi mdi-export label-icon"></i> Export Data
+                                <i class="mdi mdi-export label-icon"></i> Export Data.
                             </button>
                         </div>
                         <div class="card-body">
