@@ -121,6 +121,7 @@ class InputPOCustController extends Controller
                 ->addColumn('statusLabel', function ($data) {
                     return $data->status;
                 })
+                // penambahan kg
                 ->addColumn('kg', function ($data) {
                     $kg = ($data->weight != 0 && $data->weight != '') ? number_format($data->qty * $data->weight, 2, ',', '.') : '0,00';
                     return $kg . ' KG';
