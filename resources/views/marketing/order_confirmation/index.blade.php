@@ -195,16 +195,42 @@
 
 @push('scripts')
     <script>
+        // Fungsi untuk menyimpan posisi halaman saat ini
+        function saveCurrentPage(menuKey) {
+            let pageInfo = $('#order_confirmation_table').DataTable().page.info();
+            sessionStorage.setItem(`currentPage_${menuKey}`, pageInfo.page);
+        }
+
+        // Fungsi untuk mengambil posisi halaman yang tersimpan
+        function getSavedPage(menuKey) {
+            return sessionStorage.getItem(`currentPage_${menuKey}`);
+        }
+
+        // Fungsi untuk menghapus posisi halaman yang tersimpan
+        function clearAllSavedPages() {
+            sessionStorage.removeItem('currentPage_po_customer');
+            sessionStorage.removeItem('currentPage_order_confirmation');
+            sessionStorage.removeItem('currentPage_sales_order');
+        }
+
         $(document).ready(function() {
+            // Gantilah 'menuKey' sesuai halaman yang sedang dibuka ('po_customer', 'order_confirmation', atau 'sales_order')
+            const menuKey = 'order_confirmation';
+            const savedPage = getSavedPage(menuKey) || 0;
+
             var i = 1;
             let dataTable = $('#order_confirmation_table').DataTable({
                 dom: '<"top d-flex"<"position-absolute top-0 end-0 d-flex"fl>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>><"clear:both">',
+                displayStart: savedPage * 20, // Atur posisi halaman berdasarkan nilai tersimpan
                 initComplete: function(settings, json) {
                     // Setelah DataTable selesai diinisialisasi
                     // Tambahkan elemen kustom ke dalam DOM
                     $('.top').prepend(
                         `<div class='pull-left col-sm-12 col-md-5'><div class="btn-group mb-4"><button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-checkbox-multiple-marked-outline"></i> Bulk Actions</button><ul class="dropdown-menu"><li><button class="dropdown-item" data-status="Request" onclick="showModal(this, 'Delete');"><i class="mdi mdi-trash-can"></i> Delete</button></li><li><button class="dropdown-item" data-status="Request" onclick="showModal(this);"><i class="mdi mdi-check-bold"></i> Posted</button></li></ul></div></div>`
                     );
+                    if (savedPage > 0) {
+                        dataTable.page(parseInt(savedPage)).draw('page');
+                    }
                 },
                 processing: true,
                 serverSide: true,
@@ -224,7 +250,7 @@
                 }], // hide sort icon on header of first column
                 aaSorting: [
                     [2, 'desc']
-                ], // start to sort data in second column 
+                ], // start to sort data in second column
                 ajax: {
                     url: baseRoute + '/marketing/orderConfirmation/',
                     data: function(d) {
@@ -315,6 +341,23 @@
                     targets: [3]
                 }]
             });
+
+            // Simpan nomor halaman saat ini ketika pengguna berpindah halaman
+            $('#order_confirmation_table').on('draw.dt', function() {
+                saveCurrentPage(menuKey);
+            });
+        });
+
+        // Tambahkan event listener pada semua link di dalam #sidebar-menu
+        document.querySelectorAll('#sidebar-menu a').forEach(link => {
+            link.addEventListener('click', function() {
+                clearAllSavedPages();
+            });
+        });
+
+        // Seleksi tag <a> pertama di dalam .card-header dan tambahkan event click
+        $('.card-header a:first').on('click', function() {
+            clearAllSavedPages();
         });
     </script>
 @endpush

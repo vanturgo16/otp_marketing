@@ -201,8 +201,8 @@
                         <div class="row mb-2">
                             <label for="status" class="col-sm-3 col-form-label">Status</label>
                             <div class="col-sm-9">
-                                <select class="form-control data-select2" name="status"
-                                    id="statusSelectOption" style="width: 100%" required>
+                                <select class="form-control data-select2" name="status" id="statusSelectOption"
+                                    style="width: 100%" required>
                                     <option value="">** Please select a Status</option>
                                 </select>
                             </div>
@@ -222,10 +222,33 @@
 
 @push('scripts')
     <script>
+        // Fungsi untuk menyimpan posisi halaman saat ini
+        function saveCurrentPage(menuKey) {
+            let pageInfo = $('#so_customer_table').DataTable().page.info();
+            sessionStorage.setItem(`currentPage_${menuKey}`, pageInfo.page);
+        }
+
+        // Fungsi untuk mengambil posisi halaman yang tersimpan
+        function getSavedPage(menuKey) {
+            return sessionStorage.getItem(`currentPage_${menuKey}`);
+        }
+
+        // Fungsi untuk menghapus posisi halaman yang tersimpan
+        function clearAllSavedPages() {
+            sessionStorage.removeItem('currentPage_po_customer');
+            sessionStorage.removeItem('currentPage_order_confirmation');
+            sessionStorage.removeItem('currentPage_sales_order');
+        }
+
         $(document).ready(function() {
+            // Gantilah 'menuKey' sesuai halaman yang sedang dibuka ('po_customer', 'order_confirmation', atau 'sales_order')
+            const menuKey = 'po_customer';
+            const savedPage = getSavedPage(menuKey) || 0;
+
             var i = 1;
             let dataTable = $('#so_customer_table').DataTable({
                 dom: '<"top d-flex"<"position-absolute top-0 end-0 d-flex search-type"fl>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>><"clear:both">',
+                displayStart: savedPage * 20, // Atur posisi halaman berdasarkan nilai tersimpan
                 initComplete: function(settings, json) {
                     // Setelah DataTable selesai diinisialisasi
                     // Tambahkan elemen kustom ke dalam DOM
@@ -235,6 +258,9 @@
                     $('.search-type').prepend(
                         `<div id="wo_list_filter" class="dataTables_filter"><label><input type="text" class="form-control form-control-sm" id="type_search" placeholder="Search by type" aria-controls="wo_list" readonly></label></div>`
                     );
+                    if (savedPage > 0) {
+                        dataTable.page(parseInt(savedPage)).draw('page');
+                    }
                 },
                 processing: true,
                 serverSide: true,
@@ -401,6 +427,18 @@
                     orderable: false,
                     targets: [0]
                 }],
+            });
+
+            // Simpan nomor halaman saat ini ketika pengguna berpindah halaman
+            $('#so_customer_table').on('draw.dt', function() {
+                saveCurrentPage(menuKey);
+            });
+        });
+
+        // Tambahkan event listener pada semua link di dalam #sidebar-menu
+        document.querySelectorAll('#sidebar-menu a').forEach(link => {
+            link.addEventListener('click', function() {
+                clearAllSavedPages();
             });
         });
     </script>
