@@ -133,10 +133,10 @@
                                                     <tr>
                                                         <td class="text-center">{{ $sales_order->type_product }}</td>
                                                         @php
-                                                            $perforasi =
-                                                                $product->perforasi == null ? '-' : $product->perforasi;
+                                                            $perforasi = $product->perforasi === '' ? '' : ($product->perforasi === null ? ' | Perforasi: -' : ' | Perforasi: ' . $product->perforasi);
+                                                            $group_sub_code = !isset($product->group_sub_code) ? '' : ($product->group_sub_code === null ? ' | Group Sub: -' : ' | Group Sub: ' . $product->group_sub_code);
                                                         @endphp
-                                                        <td>{{ $product->description . ' | Perforasi: ' . $perforasi }}</td>
+                                                        <td>{{ $product->description . $perforasi . $group_sub_code }}</td>
                                                         <td>{{ $sales_order->cust_product_code }}</td>
                                                         <td class="text-center">{{ $sales_order->masterUnit->unit_code }}
                                                         </td>

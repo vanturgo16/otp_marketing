@@ -367,11 +367,10 @@ function fetchProducts(selectElement) {
             },
             success: function (response) {
                 // Tanggapi dengan mengisi opsi produk sesuai data dari server
-
-
                 $.each(response.products, function (index, product) {
-                    $perforasi = product.perforasi == null ? '-' : product.perforasi;
-                    options += '<option value="' + product.id + '">' + product.description + ' | Perforasi: ' + $perforasi + '</option>';
+                    $perforasi = product.perforasi === undefined ? '' : (product.perforasi == null ? ' | Perforasi : -' : ' | Perforasi: ' + product.perforasi);
+                    $group_sub_code = product.group_sub_code === undefined ? '' : (product.group_sub_code == null ? ' | Group Sub : -' : ' | Group Sub: ' + product.group_sub_code);
+                    options += '<option value="' + product.id + '">' + product.description + $perforasi + $group_sub_code + '</option>';
                 });
                 productSelect.html(options);
 
@@ -513,13 +512,16 @@ function editOrderConfirmation() {
                         // console.log(details[i].id_master_product);
                         // Mengisi nilai dari detail ke dalam baris yang di-klon
                         $clonedRow.find('.typeProductSelect').val(details[i].type_product);
-                        
+
                         // Function untuk menambahkan opsi produk ke elemen select
                         function appendProductOption(product) {
-                            $perforasi = product.perforasi == null ? '-' : product.perforasi;
+                            // $perforasi = product.perforasi == null ? '' : ' | Perforasi: ' + product.perforasi;
+                            $perforasi = product.perforasi === '' ? '' : (product.perforasi === null ? ' | Perforasi : - ' : ' | Perforasi: ' + product.perforasi);
+                            $group_sub_code = product.group_sub_code === '' ? '' : (product.group_sub_code === null ? ' | Group Sub : - ' : ' | Group Sub: ' + product.group_sub_code);
+                            options += '<option value="' + product.id + '">' + product.description + $perforasi + $group_sub_code + '</option>';
                             $clonedRow.find('.productSelect').append($('<option>', {
                                 value: product.id,
-                                text: product.description + ' | Perforasi: ' + $perforasi
+                                text: product.description + $perforasi + $group_sub_code
                             }));
                         }
 
@@ -598,8 +600,13 @@ function viewOrderConfirmation() {
                         function displaySearchResult(type, code) {
                             // Mendapatkan hasil pencarian
                             let result = getFilteredProduct(type, code);
-                            $perforasi = result[0]['perforasi'] != null ? result[0]['perforasi'] : '-';
-                            return result[0]['description'] + ' | Perforasi: ' + $perforasi;
+                            console.log(result);
+
+                            // $perforasi = result[0]['perforasi'] !== null ? result[0]['perforasi'] : '-';
+                            $perforasi = result[0]['perforasi'] === '' ? '' : (result[0]['perforasi'] === null ? ' | Perforasi: - ' : ' | Perforasi: ' + result[0]['perforasi']);
+                            // $group_sub_code = result[0]['group_sub_code'] !== null ? result[0]['group_sub_code'] : '-';
+                            $group_sub_code = result[0]['group_sub_code'] === '' ? '' : (result[0]['group_sub_code'] === null ? ' | Group Sub: - ' : ' | Group Sub: ' + result[0]['group_sub_code']);
+                            return result[0]['description'] + $perforasi + $group_sub_code;
                             // Menampilkan hasil pencarian (misalnya, di konsol)
                             // console.log(result);
                             // Jika ingin menampilkan hasil pada elemen HTML, sesuaikan kode di sini
@@ -809,7 +816,7 @@ $('#modalExportData').on('click', function () {
             $('.data-select2').select2({
                 width: 'resolve', // need to override the changed default
                 theme: "classic",
-                dropdownParent: $("#exportData") 
+                dropdownParent: $("#exportData")
             });
             $('#exportData').modal('show');
         },

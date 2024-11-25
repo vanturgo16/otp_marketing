@@ -362,7 +362,7 @@
                                                 </thead>
                                                 <tbody class="row_products">
                                                     <tr>
-                                                        <td class="text-center" colspan="9">There is no data yet,
+                                                        <td class="text-center" colspan="11">There is no data yet,
                                                             please
                                                             select Order Confirmation</td>
                                                     </tr>
