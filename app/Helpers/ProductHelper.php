@@ -8,21 +8,21 @@ if (!function_exists('getProductName')) {
     {
         // Gantilah dengan logika pengambilan data produk dari database atau sumber data lainnya
         $combinedDataProducts = DB::table('master_product_fgs')
-            ->select('id', 'product_code', 'description', 'id_master_units', 'perforasi', DB::raw("'FG' as type_product"))
+            ->select('id', 'product_code', 'description', 'id_master_units', 'perforasi', DB::raw("'FG' as type_product"), 'group_sub_code')
             ->where('status', 'Active')
             ->unionAll(
                 DB::table('master_wips')
-                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', 'perforasi', DB::raw("'WIP' as type_product"))
+                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', 'perforasi', DB::raw("'WIP' as type_product"), DB::raw("'' as group_sub_code"))
                     ->where('status', 'Active')
             )
             ->unionAll(
                 DB::table('master_raw_materials')
-                    ->select('id', 'rm_code as product_code', 'description', 'id_master_units', DB::raw("null as perforasi"), DB::raw("'RM' as type_product"))
+                    ->select('id', 'rm_code as product_code', 'description', 'id_master_units', DB::raw("'' as perforasi"), DB::raw("'RM' as type_product"), DB::raw("'' as group_sub_code"))
                     ->where('status', 'Active')
             )
             ->unionAll(
                 DB::table('master_tool_auxiliaries')
-                    ->select('id', 'code as product_code', 'description', 'id_master_units', DB::raw("null as perforasi"), DB::raw("'AUX' as type_product"))
+                    ->select('id', 'code as product_code', 'description', 'id_master_units', DB::raw("'' as perforasi"), DB::raw("'AUX' as type_product"), DB::raw("'' as group_sub_code"))
             )
             ->get();
 
@@ -30,6 +30,9 @@ if (!function_exists('getProductName')) {
             return $item->type_product == $typeProduct && $item->id == $idMasterProduct;
         });
 
-        return $filteredProduct ? $filteredProduct->description . ' | Perforasi : ' . $filteredProduct->perforasi  : 'Product Not Found';
+        $perforasi = $filteredProduct->perforasi === '' ? '' : ($filteredProduct->perforasi === null ? ' | Perforasi : -' : ' | Perforasi : ' . $filteredProduct->perforasi);
+        $group_sub_code = $filteredProduct->group_sub_code === '' ? '' : ($filteredProduct->group_sub_code === null ? ' | Group Sub : -' : ' | Group Sub : ' . $filteredProduct->group_sub_code);
+
+        return $filteredProduct ? $filteredProduct->description . $perforasi . $group_sub_code  : 'Product Not Found';
     }
 }

@@ -729,8 +729,10 @@ function getDetailOrder(order_number, response) {
 
             // let checkboxHtml = isInCompare ? '' : '<input type="checkbox" class="rowCheckbox" name="selected_rows[]" value="' + i + '">';
             let tableColor = isInCompare ? 'table-danger' : '';
-            let $perforasi = description[0]['perforasi'] == null ? '-' : description[0]['perforasi'];
-            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + ' | Perforasi: ' + $perforasi + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><span class="kg">' + (details[i].qty * weight).toFixed(2).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><span class="based_price">' + (details[i].price / weight).toFixed(0).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
+            // let $perforasi = description[0]['perforasi'] == null ? '-' : description[0]['perforasi'];
+            let $perforasi = description[0]['perforasi'] === '' ? '' : (description[0]['perforasi'] === null ? ' | Perforasi: - ' : ' | Perforasi: ' + description[0]['perforasi']);
+            let $group_sub_code = description[0]['group_sub_code'] === '' ? '' : (description[0]['group_sub_code'] === null ? ' | Group Sub: - ' : ' | Group Sub: ' + description[0]['group_sub_code']);
+            $('#productTable').append('<tr class="row-check ' + tableColor + '"><td class="text-center">' + (i + 1) + '</td>  <td class="text-center"><input type="text" class="form-control d-none" name="type_product[]" value="' + details[i].type_product + '" readonly>' + details[i].type_product + '</td> <td><input type="text" class="form-control d-none" name="id_master_products[]" value="' + details[i].id_master_product + '" readonly>' + description[0]['description'] + $perforasi + $group_sub_code + '</td> <td><input type="text" class="form-control d-none" name="cust_product_code[]" value="' + custProductCode + '" readonly>' + custProductCode + '</td> <td><input type="text" class="form-control d-none" name="id_master_units[]" value="' + details[i].master_unit.id + '" readonly>' + details[i].master_unit.unit_code + '</td> <td class="text-center"><input type="text" class="form-control d-none" name="qty[]" value="' + details[i].qty + '" readonly>' + details[i].qty + '</td> <td class="text-end"><span class="kg">' + (details[i].qty * weight).toFixed(2).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td> <td class="text-end"><input type="text" class="form-control d-none" name="price[]" value="' + details[i].price + '" readonly>' + details[i].price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</td> <td class="text-end"><span class="based_price">' + (details[i].price / weight).toFixed(0).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td> <td class="text-end"><input type="text" class="form-control d-none" name="subtotal[]" value="' + details[i].subtotal + '" readonly><span class="subtotal">' + details[i].subtotal.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.") + '</span></td><td class="text-center align-middle">' + checkboxHtml + '</td></tr>');
 
         }
 
@@ -772,8 +774,10 @@ function fetchProducts(selectElement) {
                 // Tanggapi dengan mengisi opsi produk sesuai data dari server
                 // console.log(response);
                 $.each(response.products, function (index, product) {
-                    $perforasi = product.perforasi == null ? '-' : product.perforasi;
-                    options += '<option value="' + product.id + '">' + product.description + ' | Perforasi: ' + $perforasi + '</option>';
+                    // $perforasi = product.perforasi == null ? '' : ' | Perforasi: ' + product.perforasi;
+                    $perforasi = product.perforasi === undefined ? '' : (product.perforasi === null ? ' | Perforasi: - ' : ' | Perforasi: ' + product.perforasi);
+                    $group_sub_code = product.group_sub_code == null ? '' : ' | Group Sub: ' + product.group_sub_code;
+                    options += '<option value="' + product.id + '">' + product.description + $perforasi + $group_sub_code + '</option>';
                 });
                 productSelect.html(options);
 
@@ -951,10 +955,13 @@ function editSalesOrder() {
                     $('.typeProductSelect').val(response.order.type_product);
                     // Function untuk menambahkan opsi produk ke elemen select
                     function appendProductOption(product) {
-                        $perforasi = product.perforasi == null ? '-' : product.perforasi;
+                        // $perforasi = product.perforasi == null ? '-' : product.perforasi;
+                        $perforasi = product.perforasi === '' ? '' : (product.perforasi === null ? ' | Perforasi : - ' : ' | Perforasi: ' + product.perforasi);
+                        $group_sub_code = product.group_sub_code === '' ? '' : (product.group_sub_code === null ? ' | Group Sub : - ' : ' | Group Sub: ' + product.group_sub_code);
+                        options += '<option value="' + product.id + '">' + product.description + $perforasi + $group_sub_code + '</option>';
                         $('.productSelect').append($('<option>', {
                             value: product.id,
-                            text: product.description + ' | Perforasi: ' + $perforasi
+                            text: product.description + $perforasi + $group_sub_code
                         }));
                     }
 

@@ -426,7 +426,7 @@ class orderConfirmationController extends Controller
         } else if ($typeProduct == 'FG') {
             $products = DB::table('master_product_fgs as a')
                 ->where('a.status', 'Active')
-                ->select('a.id', 'a.product_code', 'a.description', 'a.perforasi')
+                ->select('a.id', 'a.product_code', 'a.description', 'a.perforasi', 'a.group_sub_code')
                 ->get();
         } else if ($typeProduct == 'RM') {
             $products = DB::table('master_raw_materials as a')
@@ -489,21 +489,21 @@ class orderConfirmationController extends Controller
             ->first();
 
         $combinedDataProducts = DB::table('master_product_fgs')
-            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"), 'perforasi')
+            ->select('id', 'product_code', 'description', 'id_master_units', DB::raw("'FG' as type_product"), 'perforasi', 'group_sub_code')
             ->where('status', 'Active')
             ->unionAll(
                 DB::table('master_wips')
-                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"), 'perforasi')
+                    ->select('id', 'wip_code as product_code', 'description', 'id_master_units', DB::raw("'WIP' as type_product"), 'perforasi', DB::raw('"" as group_sub_code'))
                     ->where('status', 'Active')
             )
             ->unionAll(
                 DB::table('master_raw_materials')
-                    ->select('id', 'rm_code as product_code', 'description', 'id_master_units', DB::raw("'RM' as type_product"), DB::raw('NULL as perforasi'))
+                    ->select('id', 'rm_code as product_code', 'description', 'id_master_units', DB::raw("'RM' as type_product"), DB::raw('"" as perforasi'), DB::raw('"" as group_sub_code'))
                     ->where('status', 'Active')
             )
             ->unionAll(
                 DB::table('master_tool_auxiliaries')
-                    ->select('id', 'code as product_code', 'description', 'id_master_units', DB::raw("'AUX' as type_product"), DB::raw('NULL as perforasi'))
+                    ->select('id', 'code as product_code', 'description', 'id_master_units', DB::raw("'AUX' as type_product"), DB::raw('"" as perforasi'), DB::raw('"" as group_sub_code'))
             )
             ->get();
 
