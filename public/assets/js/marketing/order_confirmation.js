@@ -783,7 +783,21 @@ function bulkDeleted(oc_number = null) {
 }
 
 function refreshDataTable() {
-    $('#order_confirmation_table').DataTable().ajax.reload();
+    // $('#order_confirmation_table').DataTable().ajax.reload();
+    // $('#checkAllRows').prop('checked', false);
+    // Ambil instance DataTable
+    let dataTable = $('#order_confirmation_table').DataTable();
+
+    // Ambil halaman saat ini sebelum reload
+    let currentPage = dataTable.page.info().page;
+
+    // Reload data tabel
+    dataTable.ajax.reload(function () {
+        // Atur kembali ke halaman sebelumnya setelah reload selesai
+        dataTable.page(currentPage).draw('page');
+    });
+
+    // Uncheck semua checkbox jika ada
     $('#checkAllRows').prop('checked', false);
 }
 

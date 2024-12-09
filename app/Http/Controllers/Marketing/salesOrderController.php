@@ -409,7 +409,9 @@ class salesOrderController extends Controller
         try {
             // Simpan data ke dalam tabel sales_orders
             $sales_order = salesOrder::where('so_number', $request->so_number)->first();
-            // echo json_encode($sales_order);exit;
+            $qty_lama = intval($sales_order->qty);
+            $qty_baru = intval($data_product['qty']);
+            $selisih = $qty_baru - $qty_lama;
             if ($request->input('selected_rows') || $request->input('id_order_confirmation') == '') {
                 $sales_order->update([
                     'id_order_confirmations' => $request->id_order_confirmations,
@@ -421,12 +423,12 @@ class salesOrderController extends Controller
                     'type_product' => $data_product['type_product'],
                     'id_master_products' => $data_product['id_master_products'],
                     'cust_product_code' => $data_product['cust_product_code'],
-                    'qty' => $data_product['qty'],
+                    'qty' => $sales_order->qty + $selisih,
                     'id_master_units' => $data_product['id_master_units'],
                     'price' => $data_product['price'],
                     'total_price' => $request->total_price,
                     'due_date' => $request->due_date,
-                    // 'outstanding_delivery_qty' => $request->outstanding_delivery_qty,
+                    'outstanding_delivery_qty' => $sales_order->outstanding_delivery_qty + $selisih,
                     'id_master_customers' => $request->id_master_customers,
                     'id_master_customer_addresses' => $request->id_master_customer_addresses,
                     'id_master_salesmen' => $request->id_master_salesmen,
