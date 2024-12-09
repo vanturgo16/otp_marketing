@@ -467,5 +467,10 @@
         $('.card-header a:first').on('click', function() {
             clearAllSavedPages();
         });
+
+        setTimeout(function() {
+            const alertElement = $('.alert');
+            alertElement.addClass('d-none');
+        }, 3000); // Menyembunyikan setelah 3 detik (3000 milidetik)
     </script>
 @endpush
