@@ -205,6 +205,13 @@ $(document).ready(function () {
                 // Tangani kesalahan
                 console.error(error);
             });
+
+        $('.custProductCode').val('');
+        $('.qty').val('');
+        $('.price').val('');
+        $('.total_price').val('');
+        $('.kg').val('');
+        $('.based_price').val('');
     });
 
     // ketika option customer berubah
@@ -625,7 +632,7 @@ function refreshDataTable() {
     let currentPage = dataTable.page.info().page;
 
     // Reload data tabel
-    dataTable.ajax.reload(function() {
+    dataTable.ajax.reload(function () {
         // Atur kembali ke halaman sebelumnya setelah reload selesai
         dataTable.page(currentPage).draw('page');
     });
@@ -820,6 +827,8 @@ function fetchProducts(selectElement) {
     $('.qty').val('');
     $('.price').val('');
     $('.total_price').val('');
+    $('.kg').val('');
+    $('.based_price').val('');
 }
 
 function fethchProductDetail(selectElement) {
@@ -1161,9 +1170,16 @@ $('#modalExportData').on('click', function () {
 });
 
 $(document).on('keyup', '.price', function () {
-    let price = $(this).val();
-    let weight = $('.weight').val();
-    let based_price = price / weight;
+    let price = parseFloat($(this).val()) || 0; // Konversi ke float, default 0 jika tidak valid
+    let weight = parseFloat($('.weight').val()) || 0; // Konversi ke float, default 0 jika tidak valid
+
+    let based_price;
+
+    if (weight > 0) {
+        based_price = price / weight; // Lakukan pembagian jika weight > 0
+    } else {
+        based_price = 0; // Berikan nilai default jika weight = 0
+    }
 
     $('.based_price').val(based_price.toFixed(0));
 });

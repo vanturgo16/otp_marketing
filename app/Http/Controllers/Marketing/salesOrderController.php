@@ -285,6 +285,7 @@ class salesOrderController extends Controller
             // }
 
             $this->saveLogs('Adding New Sales Order : ' . $request->so_number);
+            $this->generateWO(Crypt::encrypt($request->so_number));
 
             DB::commit();
 
