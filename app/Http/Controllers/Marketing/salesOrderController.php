@@ -285,7 +285,7 @@ class salesOrderController extends Controller
             // }
 
             $this->saveLogs('Adding New Sales Order : ' . $request->so_number);
-            $this->generateWO(Crypt::encrypt($request->so_number));
+            // $this->generateWO(Crypt::encrypt($request->so_number));
 
             DB::commit();
 
@@ -848,7 +848,6 @@ class salesOrderController extends Controller
     public function bulkPosted(Request $request)
     {
         $so_numbers = $request->input('so_numbers');
-
         DB::beginTransaction();
         try {
             // Lakukan logika untuk melakukan bulk update status di sini
@@ -859,6 +858,11 @@ class salesOrderController extends Controller
 
             DB::commit();
             $this->saveLogs('Changed Sales Order ' . implode(', ', $so_numbers) . ' to posted');
+
+            // Looping hanya untuk proses generateWO
+            foreach ($so_numbers as $soNumber) {
+                $this->generateWO(Crypt::encrypt($soNumber));
+            }
 
             return response()->json(['message' => 'Change to posted successful', 'type' => 'success'], 200);
         } catch (\Exception $e) {
