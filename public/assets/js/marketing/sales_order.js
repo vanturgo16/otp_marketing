@@ -1186,8 +1186,15 @@ $(document).on('keyup', '.price', function () {
 
 $(document).on('keyup', '.qty', function () {
     let qty = $(this).val();
+    let unit = $('.unitSelect option:selected').text();
     let weight = $('.weight').val();
-    let kg = qty * weight;
+    let kg;
 
-    $('.kg').val(kg.toFixed(2));
+    if (unit == 'KG') {
+        kg = qty;
+        $('.kg').val(kg);
+    } else {
+        kg = qty * weight;
+        $('.kg').val(kg.toFixed(2));
+    }
 });
