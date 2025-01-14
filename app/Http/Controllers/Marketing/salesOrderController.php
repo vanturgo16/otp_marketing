@@ -145,7 +145,11 @@ class salesOrderController extends Controller
                         $deadline = "-";
                     }
 
-                    $kg = ($data->weight != 0 && $data->weight != '') ? number_format($data->qty * $data->weight, 2, ',', '.') : '0,00';
+                    if ($data->unit_code == 'KG') {
+                        $kg = $data->qty;
+                    } else {
+                        $kg = ($data->weight != 0 && $data->weight != '') ? number_format($data->qty * $data->weight, 2, ',', '.') : '0,00';
+                    }
 
                     if ($data->status <> 'Request') {
                         return '<span style="font-size: small;width: 100%"><b>Due Date: </b>' . $data->due_date . '<br><span class="text-primary"><b>Qty: </b>' . $qty  . ' ' . '</span><br><span class="text-dark"><b>KG: </b>' . $kg . ' KG</span><br><span class="text-info"><b>Delivered Qty: </b>' . $delivery_qty . '</span><br><span class="text-dark"><b>Outstanding Qty: </b>' . $outstanding_qty . '</span><br><span class="text-danger"><b>Cancel Qty: </b>' . $cancel_qty . '</span><br><b>Deadline: ' . $deadline . '</b></span>';

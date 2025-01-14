@@ -48,9 +48,7 @@ class ExportSalesORder implements FromCollection, WithHeadings, WithStyles, With
                 'price' => $item->price,
                 'qty' => $item->qty,
                 'unit_code' => $item->unit_code,
-                'kg' => ($item->weight != 0 && $item->weight != '')
-                    ? number_format((float)$item->qty * (float)$item->weight, 2, ',', '.')
-                    : '0,00',
+                'kg' => ($item->unit_code == 'KG') ? number_format((float)$item->qty, 2, ',', '.') : (($item->weight != 0 && $item->weight != '') ? number_format((float)$item->qty * (float)$item->weight, 2, ',', '.') : '0,00'),
                 'total_price' => $item->total_price,
                 // Bulatkan hasil pembagian ke integer, jika weight 0 maka set jadi 0
                 // 'based_price' => ($item->weight != 0 && $item->weight != '') ? round((float)$item->price / (float)$item->weight) : 0,
