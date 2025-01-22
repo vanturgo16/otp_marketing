@@ -172,7 +172,7 @@ class salesOrderController extends Controller
                     $woList = $data->status == 'Request' || $data->status == 'Un Posted' ? 'Please Wait SO Posted' : 'WO&nbspList';
                     $woHref = $data->status == 'Request' || $data->status == 'Un Posted' ? '#' : route('marketing.salesOrder.generateWO', encrypt($data->so_number));
                     $display = $data->so_type == 'Machine' || $data->so_type == 'Raw Material' ? 'd-none' : '';
-                    return '<a href="' . $woHref . '" class="btn btn-danger btn-sm waves-effect waves-light '. $display .'" style="font-size: smaller;width: 100%">' . $woList . '</a>';
+                    return '<a href="' . $woHref . '" class="btn btn-danger btn-sm waves-effect waves-light ' . $display . '" style="font-size: smaller;width: 100%">' . $woList . '</a>';
                 })
                 ->rawColumns(['bulk-action', 'progress', 'status', 'statusLabel', 'wo_list'])
                 ->make(true);
@@ -867,7 +867,9 @@ class salesOrderController extends Controller
 
             // Looping hanya untuk proses generateWO
             foreach ($so_numbers as $soNumber) {
-                $this->generateWO(Crypt::encrypt($soNumber));
+                if (substr($soNumber, -2) != 'MC' && substr($soNumber, -2) != 'RM') {
+                    $this->generateWO(Crypt::encrypt($soNumber));
+                }
             }
 
             return response()->json(['message' => 'Change to posted successful', 'type' => 'success'], 200);
