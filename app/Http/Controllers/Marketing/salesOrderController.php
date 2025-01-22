@@ -158,7 +158,8 @@ class salesOrderController extends Controller
                     }
                 })
                 ->addColumn('description', function ($data) {
-                    return $data->product_code . ' - ' . $data->description . ' | Perforasi: ' . $data->perforasi;
+                    $perforasi = $data->perforasi === 'NULL' || $data->perforasi === null ? '-' : $data->perforasi;
+                    return $data->product_code . ' - ' . $data->description . ' | Perforasi: ' . $perforasi;
                 })
                 ->addColumn('status', function ($data) {
                     $badgeColor = $data->status == 'Request' ? 'secondary' : ($data->status == 'Un Posted' ? 'warning' : ($data->status == 'Closed' ? 'info' : ($data->status == 'Finish' ? 'primary' : 'success')));
@@ -170,7 +171,8 @@ class salesOrderController extends Controller
                 ->addColumn('wo_list', function ($data) {
                     $woList = $data->status == 'Request' || $data->status == 'Un Posted' ? 'Please Wait SO Posted' : 'WO&nbspList';
                     $woHref = $data->status == 'Request' || $data->status == 'Un Posted' ? '#' : route('marketing.salesOrder.generateWO', encrypt($data->so_number));
-                    return '<a href="' . $woHref . '" class="btn btn-danger btn-sm waves-effect waves-light" style="font-size: smaller;width: 100%">' . $woList . '</a>';
+                    $display = $data->so_type == 'Machine' || $data->so_type == 'Raw Material' ? 'd-none' : '';
+                    return '<a href="' . $woHref . '" class="btn btn-danger btn-sm waves-effect waves-light '. $display .'" style="font-size: smaller;width: 100%">' . $woList . '</a>';
                 })
                 ->rawColumns(['bulk-action', 'progress', 'status', 'statusLabel', 'wo_list'])
                 ->make(true);
@@ -917,7 +919,7 @@ class salesOrderController extends Controller
     public function print($encryptedSONumber)
     {
         $so_number = Crypt::decrypt($encryptedSONumber);
-        $salesOrder = salesOrder::with('masterSalesman', 'masterCustomer')
+        $salesOrder = salesOrder::with('masterSalesman', 'masterCustomer', 'masterUnit')
             ->where('so_number', $so_number)
             ->first();
 
@@ -949,7 +951,7 @@ class salesOrderController extends Controller
                 ->first();
         }
         // echo isset($product->perforasi);
-        // echo json_encode($product);
+        // echo json_encode($salesOrder);
         // exit;
         return view('marketing.sales_order.print', compact('salesOrder', 'product'));
     }
