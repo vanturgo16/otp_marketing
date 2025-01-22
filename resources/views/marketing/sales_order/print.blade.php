@@ -88,7 +88,7 @@
                     <tr>
                         <td>Qty Order</td>
                         <td>:</td>
-                        <td>{{ $salesOrder->qty . ' ' . $product->unit_code }}</td>
+                        <td>{{ $salesOrder->qty . ' ' . $salesOrder->masterUnit->unit_code }}</td>
                     </tr>
                     <tr>
                         <td>Perforasi</td>
