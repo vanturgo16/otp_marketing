@@ -51,7 +51,7 @@
         </div>
 
         <div class="row d-flex justify-content-between pb-3">
-            <div class="col-3 align-self-end"><b>Tanggal : 2024-01-23</b></div>
+            <div class="col-3 align-self-end"><b>Tanggal : {{ $orderConfirmation->date }}</b></div>
             <div class="col-5 text-center align-self-center">
                 <h5>KONFIRMASI ORDER</h5>
                 <p>Nomor: {{ $orderConfirmation->oc_number }}</p>
