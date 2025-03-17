@@ -39,6 +39,170 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Order Confirmation (KO)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-3">
+                                <div class="card card-h-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-12">
+                                                <span class="text-muted mb-3 lh-1 d-block text-truncate">Request / Un Post</span>
+                                                <h4 class="mb-3">
+                                                    <span>{{ $unposted }}</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                        <div class="text-nowrap">
+                                            <span class="badge bg-success-subtle text-success">+{{ $unpostedToday }}</span>
+                                            <span class="ms-1 text-muted font-size-13">Hari Ini</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="card card-h-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-12">
+                                                <span class="text-info mb-3 lh-1 d-block text-truncate">Posted</span>
+                                                <h4 class="mb-3">
+                                                    <span class="text-info">{{ $posted }}</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                        <div class="text-nowrap">
+                                            <span class="badge bg-success-subtle text-success">+{{ $postedToday }}</span>
+                                            <span class="ms-1 text-muted font-size-13">Hari Ini</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="card card-h-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-12">
+                                                <span class="text-success mb-3 lh-1 d-block text-truncate">Closed</span>
+                                                <h4 class="mb-3">
+                                                    <span class="text-success">{{ $closed }}</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                        <div class="text-nowrap">
+                                            <span class="badge bg-success-subtle text-success">+{{ $closedToday }}</span>
+                                            <span class="ms-1 text-muted font-size-13">Hari Ini</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="card card-h-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-12">
+                                                <span class="fw-bold text-primary mb-3 lh-1 d-block text-truncate">Total</span>
+                                                <h4 class="mb-3">
+                                                    <span class="text-primary">{{ $total }}</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                        <div class="text-nowrap">
+                                            <span class="badge bg-success-subtle text-success">+{{ $totalToday }}</span>
+                                            <span class="ms-1 text-muted font-size-13">Hari Ini</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Sales Order (SO)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-3">
+                                <div class="card card-h-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-12">
+                                                <span class="text-muted mb-3 lh-1 d-block text-truncate">Request / Un Post</span>
+                                                <h4 class="mb-3">
+                                                    <span>{{ $unpostedSO }}</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                        <div class="text-nowrap">
+                                            <span class="badge bg-success-subtle text-success">+{{ $unpostedTodaySO }}</span>
+                                            <span class="ms-1 text-muted font-size-13">Hari Ini</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="card card-h-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-12">
+                                                <span class="text-info mb-3 lh-1 d-block text-truncate">Posted</span>
+                                                <h4 class="mb-3">
+                                                    <span class="text-info">{{ $postedSO }}</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                        <div class="text-nowrap">
+                                            <span class="badge bg-success-subtle text-success">+{{ $postedTodaySO }}</span>
+                                            <span class="ms-1 text-muted font-size-13">Hari Ini</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="card card-h-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-12">
+                                                <span class="text-success mb-3 lh-1 d-block text-truncate">Closed</span>
+                                                <h4 class="mb-3">
+                                                    <span class="text-success">{{ $closedSO }}</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                        <div class="text-nowrap">
+                                            <span class="badge bg-success-subtle text-success">+{{ $closedTodaySO }}</span>
+                                            <span class="ms-1 text-muted font-size-13">Hari Ini</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="card card-h-100">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-12">
+                                                <span class="fw-bold text-primary mb-3 lh-1 d-block text-truncate">Total</span>
+                                                <h4 class="mb-3">
+                                                    <span class="text-primary">{{ $totalSO }}</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                        <div class="text-nowrap">
+                                            <span class="badge bg-success-subtle text-success">+{{ $totalTodaySO }}</span>
+                                            <span class="ms-1 text-muted font-size-13">Hari Ini</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
