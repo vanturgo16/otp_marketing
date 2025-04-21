@@ -98,9 +98,9 @@ class salesOrderController extends Controller
             }
 
             // Update status menjadi Closed jika outstanding_delivery_qty = 0
-            DB::table('sales_orders')
-                ->where('outstanding_delivery_qty', 0)
-                ->update(['status' => 'Closed']);
+            // DB::table('sales_orders')
+            //     ->where('outstanding_delivery_qty', 0)
+            //     ->update(['status' => 'Closed']);
 
             return DataTables::of($query)
                 ->addColumn('action', function ($data) {
