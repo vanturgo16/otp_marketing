@@ -633,7 +633,24 @@ class orderConfirmationController extends Controller
         $orderConfirmation = orderConfirmation::with('orderConfirmationDetails', 'orderConfirmationDetails.masterUnit', 'masterSalesman', 'masterCustomer', 'masterCustomer.currency', 'masterCustomer.termPayment', 'masterCustomer.customerAddress')
             ->where('oc_number', $oc_number)
             ->first();
-        // return json_encode($orderConfirmation);
+
+        $orderConfirmation = orderConfirmation::with([
+            'orderConfirmationDetails',
+            'orderConfirmationDetails.masterUnit',
+            'masterSalesman',
+            'masterCustomer',
+            'masterCustomer.currency',
+            'masterCustomer.termPayment',
+            'masterCustomer.customerAddress',
+            // Eager load hanya alamat dengan type_address mengandung 'invoice'
+            'masterCustomerAddress' => function ($query) {
+                $query->where('type_address', 'LIKE', '%invoice%')->limit(1);
+            },
+        ])
+            ->where('oc_number', $oc_number)
+            ->first();
+        // return json_encode($orderConfirmation->masterCustomerAddress->address);
+        // return json_encode(optional($orderConfirmation->masterCustomerAddress->first())->address);
         // dd($orderConfirmation);
         return view('marketing.order_confirmation.print', compact('orderConfirmation'));
     }
