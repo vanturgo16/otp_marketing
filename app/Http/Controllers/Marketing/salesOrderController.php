@@ -48,7 +48,7 @@ class salesOrderController extends Controller
         if (request()->ajax()) {
             $orderColumn = $request->input('order')[0]['column'];
             $orderDirection = $request->input('order')[0]['dir'];
-            $columns = ['', 'id', 'id_order_confirmations', 'so_number', 'date', 'so_type', 'customer', 'salesman', 'reference_number', 'description', 'due_date', 'status', '', ''];
+            $columns = ['', 'id', 'id_order_confirmations', 'so_number', 'date', 'so_type', 'so_category', 'customer', 'salesman', 'reference_number', 'description', 'due_date', 'status', '', ''];
 
             // Query dasar
             $query = DB::table('sales_orders as a')
@@ -69,7 +69,7 @@ class salesOrderController extends Controller
                 // ->join('master_units as f', 'd.id_master_units', '=', 'f.id')
                 ->join('master_units as f', 'a.id_master_units', '=', 'f.id')
                 // ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'd.qty', 'd.outstanding_delivery_qty', 'e.product_code', 'e.description', 'f.unit_code')
-                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'a.qty', 'a.qty_results', 'a.outstanding_delivery_qty', 'a.cancel_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi', 'e.weight')
+                ->select('a.id', 'a.id_order_confirmations', 'a.so_number', 'a.date', 'a.so_type', 'a.so_category','b.name as customer', 'c.name as salesman', 'a.reference_number', 'a.due_date', 'a.status', 'a.qty', 'a.qty_results', 'a.outstanding_delivery_qty', 'a.cancel_qty', 'e.product_code', 'e.description', 'f.unit_code', 'e.perforasi', 'e.weight')
                 ->orderBy($columns[$orderColumn], $orderDirection);
 
             if ($request->has('type')) {
@@ -98,9 +98,9 @@ class salesOrderController extends Controller
             }
 
             // Update status menjadi Closed jika outstanding_delivery_qty = 0
-            DB::table('sales_orders')
-                ->where('outstanding_delivery_qty', 0)
-                ->update(['status' => 'Closed']);
+            // DB::table('sales_orders')
+            //     ->where('outstanding_delivery_qty', 0)
+            //     ->update(['status' => 'Closed']);
 
             return DataTables::of($query)
                 ->addColumn('action', function ($data) {

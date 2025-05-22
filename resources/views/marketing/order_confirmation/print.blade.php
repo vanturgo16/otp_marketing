@@ -59,7 +59,8 @@
             <div class="col-4" style="border: 1px solid black">
                 <p class="mb-0">Kepada Yth, </p>
                 <p class="mb-0"><b>{{ $orderConfirmation->masterCustomer->name }}</b></p>
-                <p class="mb-0">{{ $orderConfirmation->masterCustomer->customerAddress->address }}
+                {{-- <p class="mb-0">{{ $orderConfirmation->masterCustomer->customerAddress->type_address }} - {{ $orderConfirmation->masterCustomer->customerAddress->address }} --}}
+                <p class="mb-0">{{ optional($orderConfirmation->masterCustomerAddress->first())->address }}
                     {{ $orderConfirmation->masterCustomer->customerAddress->postal_code }}</p>
                 <p class="mb-0">Telp : {{ $orderConfirmation->masterCustomer->customerAddress->mobile_phone }}</p>
             </div>

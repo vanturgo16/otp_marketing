@@ -110,6 +110,7 @@
                                             <th class="align-middle text-center" data-name="so_number">SO<br>Number</th>
                                             <th class="align-middle text-center" data-name="date">Date</th>
                                             <th class="align-middle text-center" data-name="so_type">SO Type</th>
+                                            <th class="align-middle text-center" data-name="so_category">SO Category</th>
                                             <th class="align-middle text-center" data-name="customer">Customer</th>
                                             <th class="align-middle text-center" data-name="salesman">Salesman</th>
                                             <th class="align-middle text-center" data-name="reference_number">
@@ -361,6 +362,12 @@
                     {
                         data: 'so_type',
                         name: 'so_type',
+                        // className: 'align-middle text-center',
+                        orderable: true,
+                    },
+                    {
+                        data: 'so_category',
+                        name: 'so_category',
                         // className: 'align-middle text-center',
                         orderable: true,
                     },
