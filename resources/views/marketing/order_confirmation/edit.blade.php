@@ -161,7 +161,7 @@
                                         <label for="statusOrder" class="col-sm-3 col-form-label">Status</label>
                                         <div class="col-sm-9">
                                             <input type="text" class="form-control" name="status" id="statusOrder"
-                                                value="Request" required readonly>
+                                                value="{{ $orderConfirmation->status }}" required readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -235,7 +235,7 @@
                                                                 <label for="qty"
                                                                     class="col-sm-3 col-form-label">Qty</label>
                                                                 <div class="col-sm-9">
-                                                                    <input type="number" class="form-control qty"
+                                                                    <input type="text" class="form-control qty"
                                                                         name="qty[]" onkeyup="calculateSubtotal(this)"
                                                                         required>
                                                                 </div>
@@ -261,7 +261,7 @@
                                                                 <label for="price"
                                                                     class="col-sm-3 col-form-label">Price</label>
                                                                 <div class="col-sm-9 ">
-                                                                    <input type="number" class="form-control price"
+                                                                    <input type="text" class="form-control price"
                                                                         name="price[]" onkeyup="calculateSubtotal(this)"
                                                                         required>
                                                                 </div>
