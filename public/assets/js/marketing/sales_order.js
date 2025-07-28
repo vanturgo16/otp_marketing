@@ -877,8 +877,21 @@ function fethchProductDetail(selectElement) {
 }
 
 function calculateTotalPrice(selectElement) {
-    let qty = $('.qty').val() || 0;
-    let price = $('.price').val() || 0;
+    // Only allow numbers and a single dot in qty and price inputs
+    $('.qty, .price').on('input', function () {
+        let value = $(this).val();
+        // Remove all non-digit and non-dot characters, allow only one dot
+        value = value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+        // Prevent more than one dot
+        let parts = value.split('.');
+        if (parts.length > 2) {
+            value = parts[0] + '.' + parts[1];
+        }
+        $(this).val(value);
+    });
+
+    let qty = parseFloat($('.qty').val()) || 0;
+    let price = parseFloat($('.price').val()) || 0;
 
     let total_price = qty * price;
     $('.total_price').val(total_price.toFixed(2));
@@ -1173,6 +1186,7 @@ $(document).on('keyup', '.price', function () {
     let price = parseFloat($(this).val()) || 0; // Konversi ke float, default 0 jika tidak valid
     let weight = parseFloat($('.weight').val()) || 0; // Konversi ke float, default 0 jika tidak valid
 
+
     let based_price;
 
     if (weight > 0) {
@@ -1181,7 +1195,7 @@ $(document).on('keyup', '.price', function () {
         based_price = 0; // Berikan nilai default jika weight = 0
     }
 
-    $('.based_price').val(based_price.toFixed(0));
+    $('.based_price').val(based_price.toFixed(2));
 });
 
 $(document).on('keyup', '.qty', function () {
