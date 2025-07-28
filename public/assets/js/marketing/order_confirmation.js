@@ -211,6 +211,19 @@ function resetSubtotal(selectElement) {
 
 function calculateSubtotal(selectElement) {
     let row = $(selectElement).closest('.product-row');
+
+    // Hanya izinkan angka dan titik pada input qty dan price
+    row.find('.qty, .price').on('input', function () {
+        // Allow only digits and a single dot
+        let val = this.value.replace(/[^0-9.]/g, '');
+        // Ensure only one dot is present
+        let parts = val.split('.');
+        if (parts.length > 2) {
+            val = parts[0] + '.' + parts.slice(1).join('');
+        }
+        this.value = val;
+    });
+
     let qty = parseFloat(row.find('.qty').val()) || 0;
     let price = parseFloat(row.find('.price').val()) || 0;
 
