@@ -290,7 +290,7 @@
                                     <div class="row mb-4 field-wrapper required-field">
                                         <label for="qty" class="col-sm-3 col-form-label">Qty</label>
                                         <div class="col-sm-9">
-                                            <input type="number" class="form-control qty" name="qty"
+                                            <input type="text" class="form-control qty" name="qty"
                                                 onkeyup="calculateTotalPrice(this)" required>
                                         </div>
                                     </div>
