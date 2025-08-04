@@ -1026,13 +1026,13 @@ function editSalesOrder() {
                     $('.price').val(response.order.price);
                     $('.total_price').val(response.order.total_price);
 
-                    let qty = response.order.qty;
-                    let price = response.order.price;
-                    let weight = response.detail_product.weight;
-                    let kg = qty * weight;
-                    let based_price = price / weight;
+                    let qty = parseFloat(response.order.qty) || 0;
+                    let price = parseFloat(response.order.price) || 0;
+                    let weight = parseFloat(response.detail_product.weight) || 0;
+                    let based_price = (weight > 0) ? price / weight : 0;
 
                     $('.weight').val(weight);
+                    let kg = (response.order.id_master_units == '11') ? qty : qty * weight;
                     $('.kg').val(kg.toFixed(2));
                     $('.based_price').val(based_price.toFixed(0));
 
