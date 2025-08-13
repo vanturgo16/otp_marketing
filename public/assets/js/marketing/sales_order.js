@@ -1034,7 +1034,7 @@ function editSalesOrder() {
                     $('.weight').val(weight);
                     let kg = (response.order.id_master_units == '11') ? qty : qty * weight;
                     $('.kg').val(kg.toFixed(2));
-                    $('.based_price').val(based_price.toFixed(0));
+                    $('.based_price').val(based_price.toFixed(2));
 
                     // Menginisialisasi Select2 untuk baris baru
                     $('.data-select2').select2({
