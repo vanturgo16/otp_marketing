@@ -103,6 +103,10 @@ div dl dt label {
     background-color: rgb(194, 67, 67);
     color: #ffff;
 }
+.drpdwn-closed:hover {
+    background-color: rgb(97, 5, 201);
+    color: #ffff;
+}
 
 /* BULK ACTION */
 :root {

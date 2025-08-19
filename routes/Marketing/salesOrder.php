@@ -25,6 +25,7 @@ Route::group(
             Route::post('/bulk-posted', 'bulkPosted')->name('marketing.salesOrder.bulkPosted');
             Route::post('/bulk-unposted', 'bulkUnPosted')->name('marketing.salesOrder.bulkUnPosted');
             Route::post('/bulk-deleted', 'bulkDeleted')->name('marketing.salesOrder.bulkDeleted');
+            Route::post('/bulk-closed', 'bulkClosed')->name('marketing.salesOrder.bulkClosed');
             // Route::get('/preview/{encryptedSONumber}', 'preview')->name('marketing.salesOrder.preview');
             Route::get('/print/{encryptedSONumber}', 'print')->name('marketing.salesOrder.print');
             Route::get('/generateWO/{encryptedSONumber}', 'generateWO')->name('marketing.salesOrder.generateWO');
