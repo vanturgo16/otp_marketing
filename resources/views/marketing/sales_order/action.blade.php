@@ -64,6 +64,14 @@
                         class="mdi mdi-archive-cancel"></span> | Cancel
                     Qty</button>
             </li>
+            @can('PPIC_unposted')
+                <li>
+                    <button class="dropdown-item drpdwn-closed" data-so-number="{{ $data->so_number }}"
+                        data-action="closed" onclick="showModal(this, 'Closed');"><span
+                            class="mdi mdi-lock"></span>
+                        | Closed</button>
+                </li>
+            @endcan
         @endif
         <li>
             <a class="dropdown-item drpdwn"

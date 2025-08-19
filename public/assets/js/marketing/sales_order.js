@@ -480,12 +480,13 @@ function filterSearch(button) {
 function showModal(selectElement, actionButton = null) {
     let so_number = $(selectElement).attr("data-so-number");
     let status = $(selectElement).attr("data-status");
+    let action = $(selectElement).attr("data-action");
 
-    let statusTitle = actionButton == 'Delete' ? 'Confirm to Delete' : ((status == 'Request' || status == 'Un Posted') ? 'Confirm to Posted' : 'Confirm to Un Posted');
-    let statusLabel = actionButton == 'Delete' ? 'Are you sure you want to <b class="text-danger">delete</b> this data' : ((status == 'Request' || status == 'Un Posted') ? 'Are you sure you want to <b class="text-success">posted</b> this data?' : 'Are you sure you want to <b class="text-warning">unposted</b> this data?');
-    let mdiIcon = actionButton == 'Delete' ? '<i class="mdi mdi-trash-can label-icon"></i>Delete' : ((status == 'Request' || status == 'Un Posted') ? '<i class="mdi mdi-check-bold label-icon"></i>Posted' : '<i class="mdi mdi-arrow-left-top-bold label-icon"></i>Un Posted');
-    let buttonClass = actionButton == 'Delete' ? 'btn-danger' : ((status == 'Request' || status == 'Un Posted') ? 'btn-success' : 'btn-warning');
-    let attrFunction = actionButton == 'Delete' ? `bulkDeleted('${so_number}');` : ((status == 'Request' || status == 'Un Posted') ? `bulkPosted('${so_number}');` : `bulkUnPosted('${so_number}');`);
+    let statusTitle = (actionButton == 'Delete' ? 'Confirm to Delete' : (actionButton == 'Closed' ? 'Confirm to Closed' : ((status == 'Request' || status == 'Un Posted') ? 'Confirm to Posted' : 'Confirm to Un Posted')));
+    let statusLabel = (actionButton == 'Delete' ? 'Are you sure you want to <b class="text-danger">delete</b> this data' : (actionButton == 'Closed' ? 'Are you sure you want to <b class="text-primary">closed</b> this data' : ((status == 'Request' || status == 'Un Posted') ? 'Are you sure you want to <b class="text-success">posted</b> this data?' : 'Are you sure you want to <b class="text-warning">unposted</b> this data?')));
+    let mdiIcon = (actionButton == 'Delete' ? '<i class="mdi mdi-trash-can label-icon"></i>Delete' : (actionButton == 'Closed' ? '<i class="mdi mdi-lock label-icon"></i>Closed' : ((status == 'Request' || status == 'Un Posted') ? '<i class="mdi mdi-check-bold label-icon"></i>Posted' : '<i class="mdi mdi-arrow-left-top-bold label-icon"></i>Un Posted')));
+    let buttonClass = (actionButton == 'Delete' ? 'btn-danger' : (actionButton == 'Closed' ? 'btn-primary' : ((status == 'Request' || status == 'Un Posted') ? 'btn-success' : 'btn-warning')));
+    let attrFunction = (actionButton == 'Delete' ? `bulkDeleted('${so_number}');` : (actionButton == 'Closed' ? `bulkClosed('${so_number}');` : ((status == 'Request' || status == 'Un Posted') ? `bulkPosted('${so_number}');` : `bulkUnPosted('${so_number}');`)));
 
     $('#staticBackdropLabel').text(statusTitle);
     $("#staticBackdrop .modal-body").html(statusLabel);
@@ -605,6 +606,40 @@ function bulkDeleted(so_number = null) {
                 // showAlert(response.type, response.message);
                 // Tampilkan pesan alert sesuai dengan jenis pesan
                 if (response.type === 'success') {
+                    showAlert('success', response.message);
+                } else if (response.type === 'error') {
+                    showAlert('error', response.error);
+                }
+                refreshDataTable();
+            },
+            error: function (error) {
+                showAlert('error', 'Error delete data: ' + error.responseJSON.error);
+            }
+        });
+    } else {
+        showAlert('error', 'No items selected for bulk delete');
+    }
+
+    $('#staticBackdrop').modal('hide');
+}
+
+function bulkClosed(so_number = null) {
+    let arr_so_number = [so_number];
+    var selectedSONumbers = (so_number != null && so_number != 'undefined') ? arr_so_number : getCheckedSONumbers();
+
+    if ((selectedSONumbers.length > 0) || (so_number != null && so_number != 'undefined')) {
+        $.ajax({
+            url: '/marketing/salesOrder/bulk-closed',
+            type: 'POST',
+            data: {
+                so_numbers: selectedSONumbers,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                // showAlert(response.type, response.message);
+                // Tampilkan pesan alert sesuai dengan jenis pesan
+                if (response.type === 'success') {
+
                     showAlert('success', response.message);
                 } else if (response.type === 'error') {
                     showAlert('error', response.error);

@@ -920,6 +920,23 @@ class salesOrderController extends Controller
         }
     }
 
+    public function bulkClosed(Request $request)
+    {
+        $so_numbers = $request->input('so_numbers');
+
+        try {
+            salesOrder::whereIn('so_number', $so_numbers)
+                ->update(['status' => 'Closed', 'updated_at' => now()]);
+
+            $this->saveLogs('Closed Sales Order ' . implode(', ', $so_numbers));
+
+            return response()->json(['message' => 'Successfully closed data', 'type' => 'success'], 200);
+        } catch (\Exception $e) {
+            // Tangani kesalahan jika diperlukan
+            return response()->json(['error' => 'Failed to close data', 'type' => 'error'], 500);
+        }
+    }
+
     public function print($encryptedSONumber)
     {
         $so_number = Crypt::decrypt($encryptedSONumber);
