@@ -101,7 +101,7 @@
                                     {{ $orderConfirmation->masterCustomer->currency->currency_code }}</td>
                                 <td class="d-flex justify-content-between">
                                     <span>Rp</span>
-                                    <span>{{ number_format($detail->price, 0, ',', '.') }}</span>
+                                    <span>{{ number_format($detail->price, 1, ',', '.') }}</span>
                                 </td>
                                 <td class="text-center">
                                     {{ $orderConfirmation->masterCustomer->currency->currency_code }}</td>
