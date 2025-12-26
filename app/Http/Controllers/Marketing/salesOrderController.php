@@ -1274,4 +1274,10 @@ class salesOrderController extends Controller
 
         return $query->get();
     }
+
+    public function harga()
+    {
+        $harga= salesOrder::where ('petugas', '<>', '')->select('so_number','price','petugas','tgl_update_harga','harga_sblm')->get();
+        return view('marketing.sales_order.harga', compact('harga'));
+    }
 }
