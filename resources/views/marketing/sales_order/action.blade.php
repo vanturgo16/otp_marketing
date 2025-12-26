@@ -59,14 +59,14 @@
             </li>
             
         @elseif ($data->status == 'Posted' && $data->id_order_confirmations == null)
-
+  @can('PPIC_unposted')
             <li>
                 <a class="dropdown-item drpdwn-pri"
                     href="{{ route('marketing.salesOrder.edit', encrypt($data->so_number)) }}"><span
                         class="mdi mdi-circle-edit-outline"></span> | Edit Harga
                     </a>
             </li>
-
+    @endcan
         @endif
         @if ($data->status == 'Posted')
             <li>
