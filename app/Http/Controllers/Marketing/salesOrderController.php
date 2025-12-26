@@ -24,6 +24,8 @@ use Illuminate\Support\Facades\Crypt;
 use App\Models\Marketing\salesOrderDetail;
 use App\Models\Marketing\orderConfirmation;
 use Illuminate\Database\Eloquent\JsonEncodingException;
+use Illuminate\Support\Facades\Auth;
+
 
 class salesOrderController extends Controller
 {
@@ -378,6 +380,8 @@ class salesOrderController extends Controller
         return view('marketing.sales_order.edit', compact('orderPO', 'customers', 'customer_addresses', 'salesmans', 'termPayments', 'salesOrder', 'units'));
     }
 
+
+
     /**
      * Update the specified resource in storage.
      */
@@ -387,7 +391,37 @@ class salesOrderController extends Controller
         // dd($request->all());
         // echo json_encode($request->all());
         // exit;
+// Simpan data ke dalam tabel sales_orders
+    $sales_order = salesOrder::where('so_number', $request->so_number)->first();
 
+    // ==============================
+    // 🔒 BLOK KHUSUS STATUS POSTED
+    // ==============================
+    if ($sales_order->status === 'Posted') {
+
+        $sales_order->update([
+            'price' => $request->price,
+            'total_price' => $request->total_price,
+            'tgl_update_harga' => now(),
+            'petugas' => Auth::user()->email,
+             'harga_sblm' => $sales_order->price,
+        ]);
+
+        $this->saveLogs(
+            'Update Harga Sales Order (POSTED): ' .
+            $request->so_number .
+            ' by ' . Auth::user()->email
+        );
+
+        DB::commit();
+
+        return redirect()
+            ->route('marketing.salesOrder.index')
+            ->with([
+                'success' => 'Success Update Harga Sales Order ' . $request->so_number
+            ]);
+    }
+    // ===== END BLOK POSTED =====
         if ($request->input('selected_rows')) {
             // Mendapatkan indeks baris yang terceklis
             $selectedRows = $request->input('selected_rows', []);

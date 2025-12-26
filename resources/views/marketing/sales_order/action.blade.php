@@ -50,12 +50,23 @@
             </li>
         @endif
         @if ($data->status == 'Request' || $data->status == 'Un Posted')
+
             <li>
                 <a class="dropdown-item drpdwn-pri"
                     href="{{ route('marketing.salesOrder.edit', encrypt($data->so_number)) }}"><span
                         class="mdi mdi-circle-edit-outline"></span> | Edit
                     Data</a>
             </li>
+            
+        @elseif ($data->status == 'Posted' && $data->id_order_confirmations == null)
+
+            <li>
+                <a class="dropdown-item drpdwn-pri"
+                    href="{{ route('marketing.salesOrder.edit', encrypt($data->so_number)) }}"><span
+                        class="mdi mdi-circle-edit-outline"></span> | Edit Harga
+                    </a>
+            </li>
+
         @endif
         @if ($data->status == 'Posted')
             <li>
@@ -73,6 +84,7 @@
                 </li>
             @endcan
         @endif
+        
         <li>
             <a class="dropdown-item drpdwn"
                 href="{{ route('marketing.salesOrder.view', encrypt($data->so_number)) }}"><span

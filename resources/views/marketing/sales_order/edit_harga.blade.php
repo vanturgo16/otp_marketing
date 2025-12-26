@@ -6,11 +6,11 @@
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0 font-size-18">Edit Sales Order</h4>
+                        <h4 class="mb-sm-0 font-size-18">Edit Harga Sales Order</h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
                                 <li class="breadcrumb-item"><a href="javascript: void(0);">Marketing</a></li>
-                                <li class="breadcrumb-item active">Edit Sales Order</li>
+                                <li class="breadcrumb-item active">Edit Harga Sales Order</li>
                             </ol>
                         </div>
                     </div>
@@ -63,8 +63,6 @@
 
                             <div class="card-body">
                                 <div class="mt-4 mt-lg-0">
-                                    
-                                        
                                     <div class="row mb-4 field-wrapper">
                                         <label for="orderSelect" class="col-sm-3 col-form-label">Order Confirmation</label>
                                         <div class="col-sm-9">
@@ -82,7 +80,6 @@
                                             </select>
                                         </div>
                                     </div>
-                                    
                                     {{-- <div class="row mb-4 field-wrapper required-field">
                                         <label for="soTypeSelect" class="col-sm-3 col-form-label">SO Type</label>
                                         <div class="col-sm-9">
@@ -114,28 +111,7 @@
                                                 value="{{ $salesOrder->so_number }}" required readonly>
                                         </div>
                                     </div>
-                                        {{-- kondisi untuk posted harga --}}
-                                    
-                                        
-{{-- awal so posted --}}
- @if ($salesOrder->status == 'Posted')
-                                <div class="row mb-4 field-wrapper required-field">
-                                        <label for="soCategorySelect" class="col-sm-3 col-form-label"></label>
-                                    <div class="col-sm-9">
-                                        <div class="alert alert-info alert-dismissible alert-label-icon label-arrow fade show" role="alert">
-                                            <i class="mdi mdi-information-outline label-icon"></i><strong>Info</strong> - 
-                                            Sales Order dengan status Posted hanya dapat dilakukan perubahan pada Price.
-                                            Nilai Total Price akan menyesuaikan secara otomatis.
-                                            Pastikan data Price yang Anda ubah sudah benar sebelum menyimpan.
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>
-                                    </div>
-                                    </div>
-@else
-    
-
-                                   
-                                        <div class="row mb-4 field-wrapper required-field">
+                                    <div class="row mb-4 field-wrapper required-field">
                                         <label for="soCategorySelect" class="col-sm-3 col-form-label">SO Category</label>
                                         <div class="col-sm-9">
                                             <select class="form-control data-select2" name="so_category"
@@ -161,10 +137,7 @@
                                                     Selongsong</option>
                                             </select>
                                         </div>
-                                    </div>                                        
-                                    
-                                  
-                                 
+                                    </div>
                                     <div class="row mb-4 field-wrapper required-field">
                                         <label for="date" class="col-sm-3 col-form-label">Date</label>
                                         <div class="col-sm-9">
@@ -275,8 +248,6 @@
                                     </div>
                                 </div>
                             </div>
-    {{-- tutup so posted --}}
-      @endif                      
 
                             <div class="card-header pb-0" style="cursor: pointer" id="headerProduct"
                                 onclick="toggle('#bodyProduct')" style="background-color: aliceblue">
@@ -284,25 +255,18 @@
                             </div>
                             <div class="card-body" id="bodyProduct">
                                 <div class="mt-4 mt-lg-0" id="addProduct">
-                                     @if ($salesOrder->status == 'Posted')
-                                        
-                                    @else
-                                        
-                                    
-
                                     <div class="row mb-4 field-wrapper required-field">
                                         <label for="typeProductSelect" class="col-sm-3 col-form-label">Type
                                             Product</label>
                                         <div class="col-sm-9">
                                             <select class="form-control data-select2 typeProductSelect"
                                                 name="type_product" onchange="fetchProducts(this);" style="width: 100%"
-                                                required readonly>
+                                                required>
                                                 <option value="">** Please
                                                     select a Type Product</option>
                                             </select>
                                         </div>
                                     </div>
-                                   
                                     <div class="row mb-4 field-wrapper required-field">
                                         <label for="productSelect" class="col-sm-3 col-form-label">Product</label>
                                         <div class="col-sm-9">
@@ -314,7 +278,6 @@
                                             </select>
                                         </div>
                                     </div>
-                                     
                                     <div class="row mb-4 field-wrapper">
                                         <label for="cust_product_code" class="col-sm-3 col-form-label">Cust
                                             Product
@@ -324,22 +287,13 @@
                                                 name="cust_product_code">
                                         </div>
                                     </div>
-                                    @endif
                                     <div class="row mb-4 field-wrapper required-field">
-                                <label for="qty" class="col-sm-3 col-form-label">Qty</label>
-                                <div class="col-sm-9">
-                                    <input
-                                        type="text"
-                                        class="form-control qty"
-                                        name="qty"
-                                        onkeyup="calculateTotalPrice(this)"
-                                        required
-                                        @if($salesOrder->status === 'Posted') readonly @endif
-                                    >
-                                </div>
-                            </div>
-
-                                   
+                                        <label for="qty" class="col-sm-3 col-form-label">Qty</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control qty" name="qty"
+                                                onkeyup="calculateTotalPrice(this)" required>
+                                        </div>
+                                    </div>
                                     <div class="row mb-4 field-wrapper required-field">
                                         <label for="unit" class="col-sm-3 col-form-label">Unit</label>
                                         <div class="col-sm-9">
@@ -353,17 +307,12 @@
                                             </select>
                                         </div>
                                     </div>
-
-                                    {{-- tutup if posted --}}
-                                   
-                                    
                                     <div class="row mb-4 field-wrapper">
                                         <label for="kg" class="col-sm-3 col-form-label">KG</label>
                                         <div class="col-sm-9 ">
                                             <input type="text" class="form-control kg" name="kg" readonly>
                                         </div>
                                     </div>
-                                   
                                     <div class="row mb-4 field-wrapper required-field">
                                         <label for="price" class="col-sm-3 col-form-label">Price</label>
                                         <div class="col-sm-9 ">
@@ -421,10 +370,8 @@
                                     </div>
                                     <!-- end col -->
                                 </div>
-
                                 <!-- end row -->
                             </div>
-
 
                             <div class="card-header pb-0" style="cursor: pointer" id="headerPayment"
                                 onclick="toggle('#bodyPayment')">
@@ -465,7 +412,7 @@
                                     </div>
                                 </div>
                             </div>
-                               
+
 
                             <div class="card-footer">
                                 <div class="row justify-content-end">
