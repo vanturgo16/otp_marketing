@@ -18,7 +18,10 @@ Route::group(
             Route::get('/get-product-detail', 'getProductDetail')->name('marketing.salesOrder.getProductDetail');
             Route::get('/get-all-unit', 'getAllUnit')->name('marketing.salesOrder.getAllUnit');
             Route::post('/', 'store')->name('marketing.salesOrder.store');
+
             Route::get('/edit/{encryptedSONumber}', 'edit')->name('marketing.salesOrder.edit');
+            // Route::get('/edit-harga/{encryptedSONumber}', 'edit_harga')->name('marketing.salesOrder.edit_harga');
+
             Route::get('/get-data-sales-order', 'getDataSalesOrder')->name('marketing.salesOrder.getDataSalesOrder');
             Route::put('/', 'update')->name('marketing.salesOrder.update');
             Route::get('/show/{encryptedSONumber}', 'show')->name('marketing.salesOrder.view');
