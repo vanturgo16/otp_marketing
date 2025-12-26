@@ -16,6 +16,10 @@
         @can('Marketing_salesOrder')
         <li><a href="{{ route('marketing.salesOrder.index') }}" class="{{ request()->is('marketing/salesOrder/*') ? 'active' : '' }}"><i data-feather="file-text"></i>Sales Order</a></li>
         @endcan
+
+         @can('Marketing_salesOrder')
+        <li><a href="{{ route('marketing.salesOrder.harga') }}" class="{{ request()->is('marketing/salesOrder/*') ? 'active' : '' }}"><i data-feather="file-text"></i>Data Perubhan Harga</a></li>
+        @endcan
    
     </ul>
 </li>
