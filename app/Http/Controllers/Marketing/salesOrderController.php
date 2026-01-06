@@ -855,8 +855,8 @@ class salesOrderController extends Controller
                     ->where('a.id', $idProduct)
                     ->first();
             } else if ($typeProduct == 'AUX') {
-                $detail_product = DB::table('master_tool_auxiliaries as a', DB::raw("'' as weight"))
-                    ->select('a.id', 'a.description', 'a.id_master_units')
+                $detail_product = DB::table('master_tool_auxiliaries as a')
+                    ->selectRaw("a.id, a.description, a.id_master_units, '' as weight")
                     // ->join('master_units as b', 'a.id_master_units', '=', 'b.id')
                     ->where('a.id', $idProduct)
                     ->first();
